@@ -1,0 +1,86 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block css_files %}
+<style>
+    .position {
+        margin-left: 217px;
+        position: absolute;
+        top: 70px;
+    }
+
+
+    .info {
+        font-size: 15px;
+        padding-left: 100px;
+        margin-bottom: 2px;
+    }
+
+
+    .tag {
+        display: inline-block;
+        text-decoration: none;
+        color: rgb(24, 67, 206);
+        background: #c7dbe2;
+        width: 70px;
+        height: 20px;
+        border-radius: 5px;
+        text-align: center;
+        transform: translateY(-30px);
+        font-size: small;
+    }
+
+    .quest_card {
+        border-top: 1px solid rgb(170, 170, 170);
+        width: 70%;
+        margin-left: 250px;
+        margin-bottom: 15px;
+    }
+
+</style>
+{% endblock %}
+
+{% block title %} home {% endblock %}
+
+{% block context %}
+<div class="container position">
+
+    <div style="margin-left: 270px; margin-top: 15px; margin-bottom: 80px;">
+        <h3 style="text-transform: uppercase; font-weight: 400;">Sorular</h3>
+        <a href="{% url 'formPage' %}" class="btn btn-primary" style="position: absolute; right: 9rem; top: 1rem;">Soru sor</a>
+        <p style="position: absolute; top: 80px; font-weight: 500; font-size: large;">{{ question_count }} soru</p>
+    </div>
+
+
+    {% for item in questions %}
+    <div class="quest_card" {% if not item.tags %} style="margin-bottom: 10px;" {% endif %}>
+        <div>
+            <div style="padding-top: 10px; padding-bottom: 20px;">
+                <p class="info">{{ item.votes }} oylar</p>
+                <p class="info">{{ item.ann_answer }} cevap</p>
+                <p class="info">{{ item.view }} Görüntüleme</p>
+            </div>
+            
+            {% if user.is_authenticated %}
+            <a style="text-decoration: none; font-size: large; font-weight: bold;" href="{% url 'questionDetail' pk=item.id %}"><h5 style= "margin-left: 250px; margin-top: -100px; margin-bottom: 40px;">{{ item.title }}</h5></a>
+            {% else %}
+            <a style="text-decoration: none; font-size: large; font-weight: bold;" href="{% url 'login' %}"><h5 style= "margin-left: 250px; margin-top: -100px; margin-bottom: 40px;">{{ item.title }}</h5></a>
+            {% endif %}
+
+            {% for tag_name in item.tag_names %}
+                <a {% if forloop.counter == 1 %} style="margin-left: 250px; " {% endif %} href="{% url 'tag_detail' name=tag_name %}" class="tag">{{ tag_name }}</a>
+            {% endfor %}
+
+            <div class="float-end">
+                {{ item.user__username }} tarafından oluşturuldu &nbsp; {{item.published_date|date:"SHORT_DATE_FORMAT" }}
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% block js_files %}
+<script>
+
+</script>
+{% endblock %}
+{% endblock %}

@@ -1,0 +1,82 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="tr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{% static 'bootstrap/bootstrap.css' %}">
+    <link rel="icon" href="{% static 'img/stack-overflow.png' %}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <link rel="stylesheet" href="{% static 'nav.css' %}">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    
+    {% block css_files %} {% endblock %}
+    <title>over-flow | {% block title %}{% endblock %}</title>
+</head>
+
+<body>
+
+    <nav class="navbar" style="position: fixed;">
+        <div class="container">
+            <a class="navbar-text" href="{% url 'index' %}"><img alt="png" src="{% static 'img/stack-overflow.png' %}" width="35px" href="{% url 'index' %}">over<strong>flow</strong></a>
+            <form style="width: 60%; margin-right: 20%; margin-top: -6.5px;" action="{% url 'index' %}" method="post" id="myForm" role="search">
+                {% csrf_token %}
+                <div class="input-group">
+                    <span class="input-group-text" id="basic-addon1" style="border: 1px solid gray"><i class="fa-solid fa-magnifying-glass"></i></span>
+                    <input class="form-control" style="border: 1px solid gray" type="search" name="search" placeholder="Search" aria-label="Search">
+                </div>
+            </form>
+        </div>
+    </nav>
+
+
+
+    {% block context %}{% endblock %}
+
+    <div id="mySidenav" class="sidenav">
+        <ul>
+            <li><a href="{% url 'index' %}" type="button" class="link"><i class="fa-solid fa-house"></i>Anasayfa</a></li>
+            {% if user.is_authenticated %}
+            <li><a href="{% url 'saved' %}" type="button"  class="link"><i class="fa-solid fa-bookmark"></i>Kaydedilenler</a></li>
+            <li><a href="{% url 'tags' %}" type="button"  class="link"><i class="fa-solid fa-tags"></i>Etiketler</a></li>
+            <li><a href="" type="button" data-bs-toggle="modal" data-bs-target="#exampleModal"><i class="fa-solid fa-right-from-bracket"></i> Çıkış</a></li>
+            {% else %}
+            <li><a href="{% url 'register' %}" type="button"  class="link"><i class="fa-solid fa-user-plus"></i>Kayıt ol</a></li>
+            <li><a href="{% url 'login' %}" type="button"  class="link"><i class="fa-solid fa-right-to-bracket"></i></i>Giriş</a></li>
+            {% endif %}
+        </ul>
+    </div>
+
+
+
+    <div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h1 class="modal-title fs-5" id="exampleModalLabel">Modal title</h1>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    Hesaptan çıkış yapmak istediğiniza emin misiniz ?
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hayır</button>
+                    <a href="{% url 'logout' %}" class="btn btn-primary">Evet</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    {% block js_files %}{% endblock %}
+    
+
+    <script src=" {% static 'bootstrap/bootstrap.js' %}"></script>
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"
+        integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
+    <script src="{% static 'ajax.js' %}"></script>
+</body>
+
+</html>
+

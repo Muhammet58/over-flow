@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+{% load static %}
+
+ {% block title %}login{% endblock %}
+
+ {% block context %}
+ <div class="container d-flex justify-content-center">
+
+    <form action="{% url 'login' %}" method="post" style="margin-top: 100px; margin-left: 170px;">
+        {% csrf_token %}
+
+        {% if error %}
+        <div class="alert alert-danger">{{ error }}</div>
+        {% endif %}
+
+        <label for="{{ form.username.id_for_label }}"><h5>{{ form.username.label_tag }}</h5></label>
+        {{ form.username }}
+        <br>
+        <label for="{{ form.password.id_for_label }}"><h5>{{ form.password.label_tag }}</h5></label>
+        {{ form.password }}
+        <br>
+        <div class="d-grid gap-2 col-6 mx-auto">
+            <button type="submit" class="btn btn-outline-primary btn-lg">Giriş yap</button>
+        </div>
+    </form>
+</div>
+ </div>
+ {% endblock %}

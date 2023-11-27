@@ -1,0 +1,48 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}register{% endblock %}
+
+{% block context %}
+<div class="container d-flex justify-content-center">
+
+    <form action="{% url 'register' %}" method="post" style="margin-top: 100px; margin-left: 170px;">
+        {% csrf_token %}
+
+        {% if error %}
+            <div class="alert alert-danger">{{ error }}</div>
+        {% endif %}
+        <label for="{{ form.first_name.id_for_label }}"><h5>{{ form.first_name.label_tag }}</h5></label>
+        {{ form.first_name }}
+        <br>
+        <label for="{{ form.last_name.id_for_label }}">
+            <h5>{{ form.last_name.label_tag }}</h5>
+        </label>
+        {{ form.last_name }}
+        <br>
+        <label for="{{ form.username.id_for_label }}">
+            <h5>{{ form.username.label_tag }}</h5>
+        </label>
+        {{ form.username }}
+        <br>
+        <label for="{{ form.email.id_for_label }}">
+            <h5>{{ form.email.label_tag }}</h5>
+        </label>
+        {{ form.email }}
+        <br>
+        <label for="{{ form.password1.id_for_label }}">
+            <h5>{{ form.password1.label_tag }}</h5>
+        </label>
+        {{ form.password1 }}
+        <br>
+        <label for="{{ form.password2.id_for_label }}">
+            <h5>{{ form.password2.label_tag }}</h5>
+        </label>
+        {{ form.password2 }}
+        <br>
+        <div class="d-grid gap-2 col-6 mx-auto">
+            <button type="submit" class="btn btn-outline-primary btn-lg">Kayıt ol</button>
+        </div>
+    </form>
+</div>
+{% endblock %}

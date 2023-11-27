@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+{% load static %}
+
+
+{% block title %}answer{% endblock %}
+
+
+{% block context %}
+
+<div class="container">
+    <div style="display:flex; justify-content: center;">
+        <form method="post">
+            {% csrf_token %}
+
+            {% if error %}
+            <div class="alert alert-danger">
+                {{form.error}}
+            </div>
+            {% endif %}
+            
+            {{ form.media }}
+            {{ form.as_p }}
+
+            <div class="d-grid gap-2 col-6 mx-auto mt-4">
+                <button type="submit" class="btn btn-outline-primary btn-lg">Gönder</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+{% endblock %}

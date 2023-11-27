@@ -1,0 +1,107 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block css_files %}
+<style>
+    .width {
+        display: inline-block;
+        text-decoration: none;
+        color: rgb(24, 67, 206);
+        background: #c7dbe2;
+        width: 100px;
+        height: 25px;
+        border-radius: 10px;
+        text-align: center;
+    }
+
+    .info {
+        font-size: 15px;
+        padding-left: 100px;
+        margin-bottom: 2px;
+    }
+
+    .quest_card {
+        border-top: 1px solid rgb(170, 170, 170);
+        width: 70%;
+        margin-bottom: 15px;
+    }
+</style>
+{% endblock %}
+
+{% block context %}
+<div class="container" style="margin-left: 470px;">
+    <div class="row">
+        {% if error %} <div class="alert alert-danger" style="width: 1000px; text-align: center; margin-right: 12rem;">{{ error }}</div>{% endif %}
+        {% for tag in tags %}
+        <div class="col-3" style="margin-bottom: -13rem;">
+            {% if forloop.counter == 1 %}
+            <h3 style="position: absolute; top: 90px; right: 81rem;">Etiketler </h3>
+            <p style="position: absolute; top: 150px; right: 48rem;">
+                Etiket, sorunuzu diğer benzer sorularla kategorilere ayıran bir anahtar kelime veya etikettir. <br>
+                Doğru etiketleri kullanmak başkalarının sorunuzu bulmasını ve yanıtlamasını kolaylaştırır.
+            </p>
+            <form style="position: absolute; top: 14rem; left: 31rem; " action="{% url 'tags' %}" method="post" role="search">
+                {% csrf_token %}
+                <div class="input-group">
+                    <span class="input-group-text" id="basic-addon1" style="border: 1px solid gray"><i class="fa-solid fa-magnifying-glass"></i></span>
+                    <input class="form-control" style="border: 1px solid gray" type="search" name="Search" placeholder="Search" aria-label="Search">
+                </div>
+            </form>
+            {% endif %}
+            <div class="card" style="width: 20rem; height: 230px; margin-top: 290px; margin-bottom: -70px; margin-left: 10px;">
+                <div class="card-body">
+                    <a href="{% url 'tag_detail' name=tag.name%}" class="btn btn-primary">{{ tag.name }}</a>
+                    <p class="card-text" style="border-top: outset; margin-top:10px;"></p>
+                    <em class="card-text" style="margin-top: 30px;">{{ tag.content }}</em>
+                    <p style="margin-top: 95px;">{{ tag.question_set.count }} soru</p>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+
+
+<div class="container d-flex flex-column" style="margin-left: 500px; margin-top: 25px;">
+    {% if queryset_count == 0 %} <div class="alert alert-danger w-75" style="text-align: center; margin-top: 50px;"> Bu
+        etiket ile ilişkilendirilmiş soru bulunamadı </div> {% endif %}
+
+    {% for item in queryset %}
+
+    {% if forloop.counter == 1 %}
+    <h4 class="float-start">{{ tags_name }} ile etiketlenen sorular</h4>
+    <p class="float-start mb-1 mt-2">{{ tags_content }}</p>
+    <h6 style="margin-bottom: 20px; margin-top: 50px;">ilişkilendirilmiş soru: {{ queryset_count }}</h6>
+    {% endif %}
+
+    
+    <div class="quest_card" {% if not item.tags %} style="margin-bottom: 40px;" {% endif %}>
+        <div>
+            <div style="padding-top: 10px; padding-bottom: 20px;">
+                <p class="info">{{item.published_date|date:"SHORT_DATE_FORMAT" }}</p>
+                <p class="info">{{ item.ann_answer }} cevap</p>
+                <p class="info">{{ item.view }} Görüntüleme</p>
+            </div>
+            
+            {% if user.is_authenticated %}
+            <a style="text-decoration: none; font-size: large; font-weight: bold;" href="{% url 'questionDetail' pk=item.id %}"><h5 style= "margin-left: 250px; margin-top: -100px; margin-bottom: 40px;">{{ item.title }}</h5></a>
+            {% else %}
+            <a style="text-decoration: none; font-size: large; font-weight: bold;" href="{% url 'login' %}"><h5 style= "margin-left: 250px; margin-top: -110px; margin-bottom: 40px;">{{ item.title }}</h5></a>
+            {% endif %}
+            {% for tag_name in item.tag_names %}
+                <a {% if forloop.counter == 1 %} style="margin-left: 250px; " {% endif %} class="width">{{ tag_name }}</a>
+            {% endfor %}
+
+            <div class="float-end">
+                {{ item.user }} tarafından oluşturuldu
+            </div>
+        </div>
+    </div>
+
+    {% endfor %}
+</div>
+{% endblock context %}
+
+
+

@@ -1,0 +1,16 @@
+{% extends 'base.html' %}
+
+{% block title %}comment{% endblock %}
+
+
+{% block context %}
+<div class="container d-flex justify-content-center w-75">
+    <form  method="post" style="margin-top: 100px; margin-left: 170px;">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <div class="d-grid gap-2 col-6 mx-auto mt-3">
+            <button type="submit" class="btn btn-outline-primary btn-lg">Yorum ekle</button>
+        </div>
+    </form>
+</div>
+{% endblock %}

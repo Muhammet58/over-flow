@@ -1,0 +1,42 @@
+{% extends 'base.html' %}
+l{% load static %}
+
+{% block title %}ask-question{% endblock %}
+
+{% block css_files %}
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.1/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.13.1/css/bootstrap-select.css" />
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.1/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.13.1/js/bootstrap-select.min.js"></script>
+{% endblock %}
+
+{% block context %}
+<div class="container">
+    <div style="display:flex; justify-content: center;">
+        <form action="{% url 'formPage' %}" method="post" style="margin-top: 80px;">
+            {% csrf_token %}
+            
+            {{ form.media }}
+            
+            <p><label for="{{ form.title.id_for_label }}">{{ form.title.label }}</label>
+            {{ form.title }}</p>
+            
+            <p><label for="{{ form.context.id_for_label }}">{{ form.context.label }}</label>
+            {{ form.context }}</p>
+            
+
+            <label for="{{ form.tags.id_for_label }}">{{ form.tags.label }}</label>
+            {{ form.tags }}
+            
+            <div class="d-grid gap-2 col-6 mx-auto mt-3">
+                <button type="submit" class="btn btn-outline-primary btn-lg">Gönder</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+
+{% endblock %}
+
+

@@ -1,0 +1,79 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    list-style-type: none;
+}
+
+
+.navbar {
+  height: 55px;
+  width: 100%;
+  background-color: white;
+  padding: 0;
+  margin: 0;
+  border-bottom: 1px solid rgb(200, 200, 200);
+  z-index: 7;
+}
+
+.navbar-text {
+  margin-top: -6.5px;
+  transition: all .3s ease-out;
+  margin-left: 25px;
+  padding-right: 10px;
+  padding-left: 10px;
+  text-decoration: none;
+  color: black;
+  font-size: 20px;
+}
+
+.navbar-text:hover {
+  background-color: rgb(230, 230, 230);
+}
+
+.sidenav {
+    height: 100vh;
+    width: 25%;
+    position: fixed;
+    z-index: 1;
+    top: 0;
+    left: 0;
+    transition: 0.5s;
+    padding-top: 0px;
+    border-right: 1px solid rgb(200, 200, 200);
+    margin-top: 3.4rem;
+  }
+  
+.sidenav ul li{
+    list-style-type: none;
+    padding: 10px 10px 10px 10px;
+    border-top-left-radius: 10px; 
+    border-bottom-left-radius: 10px; 
+    font-size: 15px;
+    margin-left: 75px;
+  }
+
+.sidenav ul {
+  margin-left: 250px;
+  padding: 0;
+  margin-top: 20px;
+}
+
+.sidenav ul li i {
+    text-decoration: none;
+    color: #000;
+    margin-right: 10px;
+}
+
+.sidenav a {
+  width: 140px;
+  text-decoration: none;
+  color: #000;
+  transition: 0.3s;
+}
+
+
+.sidenav ul li:hover {
+  background-color: rgb(230, 230, 230);
+}
+

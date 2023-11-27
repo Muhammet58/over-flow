@@ -1,0 +1,89 @@
+{% extends 'base.html' %}
+{% block title %}saved{% endblock %}
+
+{% block css_files %}
+<style>
+    .style {
+        text-align: center;
+        width: 75%;
+        margin-top: 70px;
+        margin-left: 100px;
+    }
+
+
+    .card {
+        width: 750px;
+        height: 120px;
+        border: 1px solid #ccc;
+        box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2);
+        border-radius: 10px;
+        padding: 10px 30px 10px 10px;
+    }
+
+    .card-title {
+        font-size: 15px;
+        font-weight: 400;
+        color: #333;
+        margin-bottom: 10px;
+    }
+
+    .card-content {
+        font-size: 20px;
+        margin-bottom: 5px;
+    }
+
+
+    .tag {
+        display: inline-block;
+        text-decoration: none;
+        color: rgb(24, 67, 206);
+        background: #c7dbe2;
+        width: 70px;
+        height: 20px;
+        border-radius: 5px;
+        text-align: center;
+        font-size: small;
+    }
+
+
+</style>
+{% endblock %}
+
+{% block context %}
+<div class="container d-flex justify-content-center" style="padding-left: 20px;">
+    {% if mySaved|length == 0 %}
+        <div class="alert alert-danger style">Kayıtlı öğeniz bulunamadı !</div>
+    {% endif %}
+    <div class="row" style="margin-top: 100px; margin-right: 50px;">
+        <div class="col-12">
+            {% for item in mySaved %}
+            <div class="card">
+                <div style="display: flex;">
+                    <p class="card-title" style="margin-right: 20px;">{{ item.que.votes }} oylar</p>
+                    <p class="card-title" style="margin-right: 20px;">{{ item.answer_count }} cevap</p>
+                    <p class="card-title" style="margin-right: 20px;"> {{ item.que.view }} görüntüleme</p>
+                    <div class="dropdown" style="margin-left: 26rem;">
+                        <button type="button" class="btn btn-light-primary btn-icon btn-sm" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            <i class="fa-solid fa-ellipsis-vertical"></i>
+                        </button>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="{% url 'delete_save' pk=item.que.id %}">Kaydetmeyi ipytal et</a></li>
+                        </ul>
+                    </div>
+                </div> 
+                <a href="{% url 'questionDetail' item.que.pk %}" class="card-content">{{ item.que.title }}</a>
+                <div style="display: flex;">
+                    {% for tag in item.que.tags.all %}
+                        <a href="{% url 'tag_detail' tag.name %}" class="tag">{{ tag.name }}</a>
+                    {% endfor %}
+                </div>
+                <div style="margin-top: -10px; display: flex; justify-content: end;">
+                    <p>{{ item.que.user }}</p>
+                    <p style="margin-left: 20px;">{{ item.que.published_date }} tarihinde soruldu</p>
+                </div>
+            </div>
+            {% endfor %}  
+        </div>
+    </div>
+</div>
+{% endblock %}
