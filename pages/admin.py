@@ -1,9 +1,9 @@
 from django.contrib import admin
-from .models import Tags, answer, question, saved, comment, QuesComment, Vote
+from .models import Tags, answer, question, saved, comment, QuesComment, Vote, answerVote
 
 
 class questionAdmin(admin.ModelAdmin):
-    list_display = ('pk', 'title', 'published_date',)
+    list_display = ('pk', 'title', 'published_date')
     list_display_links = ('pk', 'title', 'published_date',)
 
 
@@ -15,3 +15,4 @@ admin.site.register(saved)
 admin.site.register(comment)
 admin.site.register(Tags)
 admin.site.register(QuesComment)
+admin.site.register(answerVote)

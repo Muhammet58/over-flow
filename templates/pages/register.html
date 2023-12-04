@@ -3,46 +3,88 @@
 
 {% block title %}register{% endblock %}
 
+{% block css_files %}
+<style>
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+
+    label {
+        font-weight: 700;
+        font-size: 17px;
+    }
+
+    .box {
+        box-shadow: 0px 0px 5px 0.5px gray;
+        width: 29rem;
+        height: 400px;
+        display: flex;
+        justify-content: center;
+        position: absolute;
+        border-radius: 7px;
+        top: 13rem;
+    }
+
+    .btn {
+        position: relative;
+        top: 7rem;
+    }
+
+    input[name=username] {
+        position: relative;
+        top: 2rem;
+    }
+
+    input[name=email] {
+        position: relative;
+        top: 3rem;
+    }
+
+    input[type=password] {
+        position: relative;
+        top: 4rem;
+    }
+</style>
+{% endblock %}
+
 {% block context %}
 <div class="container d-flex justify-content-center">
 
-    <form action="{% url 'register' %}" method="post" style="margin-top: 100px; margin-left: 170px;">
-        {% csrf_token %}
+    {% if error %}
+        <div class="alert alert-danger" style="margin-top: 8.5rem; width: 29rem; text-align: center;">{{ error }}</div>
+    {% endif %}
 
-        {% if error %}
-            <div class="alert alert-danger">{{ error }}</div>
-        {% endif %}
-        <label for="{{ form.first_name.id_for_label }}"><h5>{{ form.first_name.label_tag }}</h5></label>
-        {{ form.first_name }}
-        <br>
-        <label for="{{ form.last_name.id_for_label }}">
-            <h5>{{ form.last_name.label_tag }}</h5>
-        </label>
-        {{ form.last_name }}
-        <br>
-        <label for="{{ form.username.id_for_label }}">
-            <h5>{{ form.username.label_tag }}</h5>
-        </label>
-        {{ form.username }}
-        <br>
-        <label for="{{ form.email.id_for_label }}">
-            <h5>{{ form.email.label_tag }}</h5>
-        </label>
-        {{ form.email }}
-        <br>
-        <label for="{{ form.password1.id_for_label }}">
-            <h5>{{ form.password1.label_tag }}</h5>
-        </label>
-        {{ form.password1 }}
-        <br>
-        <label for="{{ form.password2.id_for_label }}">
-            <h5>{{ form.password2.label_tag }}</h5>
-        </label>
-        {{ form.password2 }}
-        <br>
-        <div class="d-grid gap-2 col-6 mx-auto">
-            <button type="submit" class="btn btn-outline-primary btn-lg">Kayıt ol</button>
-        </div>
-    </form>
+
+    <div class="box">
+        <form action="{% url 'register' %}" method="post">
+            {% csrf_token %}
+            <label style="position: relative; top: 1.5rem;" for="{{ form.username.id_for_label }}">{{ form.username.label_tag }}</label>
+            <input type="text" name="username" value="{{username}}" class="form-control" required style="width: 27rem; border: 1px solid black;" id="id_username">
+            <br>
+        
+            <label style="position: relative; top: 2.5rem;" for="{{ form.email.id_for_label }}">{{ form.email.label_tag }}</label>
+            <input type="email" name="email" value="{{email}}" class="form-control" required style="width: 27rem; border: 1px solid black;" id="id_email">
+            <br>
+        
+            <div class="row">
+                <div class="col">
+                    <label style="position: relative; top: 3.5rem;" for="{{ form.password1.id_for_label }}">{{ form.password1.label_tag }}</label>
+                    {{ form.password1 }}
+                </div>
+        
+                <div class="col">
+                    <label style="position: relative; top: 3.5rem;" for="{{ form.password2.id_for_label }}">{{ form.password2.label_tag }}</label>
+                    {{ form.password2 }}
+                </div>
+            </div>
+        
+            <div class="d-grid gap-2 mx-auto">
+                <button style="position: relative; top: 6.5rem;" type="submit" class="btn btn-primary btn-lg">Kayıt ol</button>
+            </div>
+        </form>
+    </div>
+    <p style="position: absolute; top: 39rem;">Hesabınız var mı?<a style="text-decoration: none;" href="{% url 'login' %}"> Giriş yap</a></p>
 </div>
 {% endblock %}

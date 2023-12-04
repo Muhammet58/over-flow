@@ -31,7 +31,7 @@
 {% block context %}
 <div class="container" style="margin-left: 470px;">
     <div class="row">
-        {% if error %} <div class="alert alert-danger" style="width: 1000px; text-align: center; margin-right: 12rem;">{{ error }}</div>{% endif %}
+        {% if error %} <div class="alert alert-danger w-75" style="text-align: center; margin-left: 30px; margin-top: 70px;">{{ error }}</div>{% endif %}
         {% for tag in tags %}
         <div class="col-3" style="margin-bottom: -13rem;">
             {% if forloop.counter == 1 %}
@@ -63,8 +63,8 @@
 
 
 
-<div class="container d-flex flex-column" style="margin-left: 500px; margin-top: 25px;">
-    {% if queryset_count == 0 %} <div class="alert alert-danger w-75" style="text-align: center; margin-top: 50px;"> Bu
+<div class="container d-flex flex-column" style="margin-left: 500px; margin-top: 80px;">
+    {% if queryset_count == 0 %} <div class="alert alert-danger w-75" style="text-align: center; margin-top: 0px;"> Bu
         etiket ile ilişkilendirilmiş soru bulunamadı </div> {% endif %}
 
     {% for item in queryset %}
@@ -101,6 +101,14 @@
 
     {% endfor %}
 </div>
+
+{% block js_files %}
+<script>
+    if ( window.history.replaceState ) {
+        window.history.replaceState( null, null, window.location.href );
+    }
+</script>
+{% endblock %}
 {% endblock context %}
 
 

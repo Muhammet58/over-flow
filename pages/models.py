@@ -15,7 +15,7 @@ class Tags(models.Model):
 class question(models.Model):
     title = models.CharField(max_length=100)
     context = RichTextUploadingField()
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)    
     published_date = models.DateTimeField(auto_now_add=True)
     view = models.IntegerField(default=0)
     votes = models.IntegerField(default=0)

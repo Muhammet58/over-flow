@@ -1,0 +1,212 @@
+{% extends 'base.html' %}
+
+{% block title %}profile{% endblock %}
+
+{% block css_files %}
+<style>
+    .img {
+        position: absolute;
+        top: 75px;
+        border: 1px solid #ccc;
+        border-radius: 10px;
+        left: 32rem;
+        width: 180px;
+        height: 180px;
+    }
+
+    .profile_edit_button {
+        border: 1px solid #ccc;
+        position: absolute;
+        text-align: center;
+        line-height: 33px;
+        text-decoration: none;
+        color: black;
+        border-radius: 10px;
+        position: absolute;
+        top: 75px;
+        right: 26rem;
+        width: 150px;
+        height: 39px
+    }
+
+
+    .profile_button {
+        border-radius: 15px;
+        text-align: center;
+        line-height: 22px;
+        text-decoration: none;
+        color: black;
+        position: absolute;
+        top: 17rem;
+        left: 32rem;
+        width: 70px;
+        height: 25px;
+        transition: .3s ease;
+    }
+
+
+    .activity_button {
+        border-radius: 15px;
+        line-height: 22px;
+        text-decoration: none;
+        color: black;
+        position: absolute;
+        text-align: center;        
+        top: 17rem;
+        left: 37rem;
+        width: 70px;
+        height: 25px;
+        transition: .3s ease;
+    }
+
+
+    .saved_button {
+        border-radius: 15px;
+        line-height: 22px;
+        text-decoration: none;
+        color: black;
+        position: absolute;
+        text-align: center;        
+        top: 17rem;
+        left: 42.5rem;
+        width: 110px;
+        height: 25px;
+        transition: .3s ease;
+    }
+
+
+    .profile_button:hover {
+        background-color: lightgray;
+    }
+
+    .saved_button:hover {
+        background-color: lightgray;
+    }
+
+    .button  {
+        text-decoration: none;
+        color: black;
+        padding-left: 1rem;
+        transition: .3s ease;
+        border-radius: 15px;
+        width: 130px;
+    }
+
+    .button:hover{
+        background: lightgray;
+    }
+
+
+    .tag {
+        color: rgb(24, 67, 206);
+        background: #c7dbe2;
+        width: 70px;
+        height: 20px;
+        border-radius: 5px;
+        text-align: center;
+        font-size: small;
+    }
+
+    
+</style>
+{% endblock %}
+
+{% block context %}
+<div class="container">
+    <div style="display: flex;">
+        <a href="{% url 'profile_page' %}"><img class="img" src="{{ user_profile.profile_picture.url }}" alt="{{ user_profile.user.username }} profile photo"></a>
+        <h1 style="position: absolute; top: 110px; left: 44rem; font-weight: 400;">{{  user_profile.user.username }}</h1>
+    </div>
+    {% if user == request.user %}
+    <a class="profile_edit_button" href="{% url 'edit_profile' %}"><i class="fa-solid fa-pencil"></i>profili düzenle</a>
+    {% endif %}
+    <a class="profile_button" href="{% url 'profile_page' %}">profil</a>
+    <a class="activity_button" {% if request.resolver_match.url_name == "activity" %} style="background: orange; color: white;" {% endif %} href="{% url 'activity' %}">aktivite</a>
+    <a class="saved_button" href="{% url 'saved_page' %}">Kaydedilenler</a>
+
+    <a class="button" style="position: absolute; top: 20rem; left: 32rem; {% if request.resolver_match.url_name == 'activity' %} background: lightgray; {% endif %}" href="{% url 'activity' %}">Özet</a> 
+    <a class="button" style="position: absolute; top: 22rem; left: 32rem;" href="{% url 'answers_page' %}">Yanıtlar</a> 
+    <a class="button" style="position: absolute; top: 24rem; left: 32rem;" href="{% url 'questions_page' %}">Sorular</a> 
+    <a class="button" style="position: absolute; top: 26rem; left: 32rem;" href="{% url 'tags_page' %}">Etiketler</a> 
+
+    <div>
+        <p style="position: absolute; top: 20rem; left: 45rem; font-size: 23px;">Sorular</p>
+        <div style="border: 1px solid #ccc; width: 450px; height: 276px; position: absolute; top: 22rem; left:45rem; border-radius: 10px; overflow: hidden;">
+            {% for que in asked_questions|slice:":5" %}
+            {% if not que %}
+                <div style="text-align: center; line-height: 250px; font-size: small;">
+                    Hiç soru sormadın
+                </div> 
+            {% endif %} 
+            <div style="border-bottom: 1px solid #ccc; padding: 15px 0px 15px 0px;">
+                <div style="float: left; margin-left: 20px;">
+                    <span style="position: relative; border: 1px solid #ccc; padding: 5px 20px 5px 20px; border-radius: 7px;">{{ que.votes }}</span>
+                </div>
+                <div style="margin-left: 100px;">
+                    <a href="{% url 'questionDetail' que.id %}" style="text-decoration: none;">{{ que.title|truncatechars:20 }}</a>
+                </div>
+                <div style="float: right; position: relative; bottom: 25px; right: 10px;">
+                    {{ que.published_date|date:"SHORT_DATE_FORMAT" }}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        <p style="position: absolute; top: 20rem; left: 75rem; font-size: 23px;">Yanıtlar</p>
+        <div style="border: 1px solid #ccc; width: 450px; height: 276px; position: absolute; top: 22rem; left:75rem; border-radius: 10px; overflow: hidden;">
+            {% for ans in answered_questions|slice:":5" %}
+            {% if not ans %}
+                <div style="text-align: center; line-height: 250px; font-size: small;">
+                    Hiçbir soruyu yanıtlamadınız
+                </div> 
+            {% endif %} 
+            <div style="border-bottom: 1px solid #ccc; padding: 15px 0px 15px 0px;">
+                <div style="float: left; margin-left: 20px;">
+                    <span style="position: relative; border: 1px solid #ccc; padding: 5px 20px 5px 20px; border-radius: 7px;">{{ ans.votes }}</span>
+                </div>
+                <div style="margin-left: 100px;">
+                    <a href="{% url 'questionDetail' ans.answerToTheQuestion.id %}" style="text-decoration: none;">{{ ans.answerToTheQuestion.title|truncatechars:20 }}</a>
+                </div>
+                <div style="float: right; position: relative; bottom: 25px; right: 10px;">
+                    {{ ans.published_date|date:"SHORT_DATE_FORMAT" }}
+                </div>
+            </div>
+            {% endfor %}  
+        </div>
+        <p style="position: absolute; top: 41rem; left: 45rem; font-size: 23px;">Etiketler</p>
+        <div style="border: 1px solid #ccc; width: 450px; height: 255px; position: absolute; top: 43rem; left:45rem; border-radius: 10px; overflow: hidden;"> 
+            {% for tag in order_tags|slice:":5" %}
+            {% if not tag %}
+                <div style="text-align: center; line-height: 250px; font-size: small;">
+                Hiçbir etiket kullanmadınız
+            </div>  
+            {% endif %}
+            <div style="border-bottom: 1px solid #ccc; padding: 15px 0px 15px 0px;">
+                <div class="tag" style="margin-left: 20px;">
+                    <a href="{% url 'tag_detail' tag.name %}" style="text-decoration: none;">{{ tag.name }}</a>
+                </div>
+                <div style="float: right; position: relative; bottom: 25px; right: 10px; font-size: 18px;">
+                    {{ tag.que_count }} gönderiler
+                </div>
+            </div>  
+            {% endfor %}  
+        </div>
+        <p style="position: absolute; top: 62rem; left: 45rem; font-size: 23px;">Oylar</p>
+        <div style="display: flex; border: 1px solid #ccc; width: 930px; height: 100px; position: absolute; top: 64rem; left:45rem; border-radius: 10px;">
+            <div style="padding: 20px 20px 0px 30px; font-weight: 500;">
+                {{ all_votes }}<br> 
+                Tüm oylar
+            </div>
+            <div style="padding: 20px 20px 0px 100px; font-weight: 500;">
+                {{ que_votes }}<br>
+                Soru oyları 
+            </div> 
+            <div style="padding: 20px 20px 0px 100px; font-weight: 500;">
+                {{ ans_votes }}<br>
+                Yanıt oyları  
+            </div>
+        </div>
+    </div>
+    <div style="position: absolute; top: 75rem; left: 60rem; border: 1px solid white; width: 10px;"></div>
+</div> 
+
+{% endblock %}

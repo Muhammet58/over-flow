@@ -5,6 +5,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
     <link rel="stylesheet" href="{% static 'bootstrap/bootstrap.css' %}">
     <link rel="icon" href="{% static 'img/stack-overflow.png' %}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
@@ -27,6 +28,9 @@
                     <input class="form-control" style="border: 1px solid gray" type="search" name="search" placeholder="Search" aria-label="Search">
                 </div>
             </form>
+            {% if user.is_authenticated %}
+            <a href="{% url 'profile_page' %}" class="profile_link">profilim</a>
+            {% endif %}
         </div>
     </nav>
 
@@ -36,14 +40,14 @@
 
     <div id="mySidenav" class="sidenav">
         <ul>
-            <li><a href="{% url 'index' %}" type="button" class="link"><i class="fa-solid fa-house"></i>Anasayfa</a></li>
+            <li {% if request.resolver_match.url_name == 'index' %} style="background-color: rgb(180, 180, 180);" {% endif %}><a href="{% url 'index' %}" type="button" class="link"><i class="fa-solid fa-house"></i>Anasayfa</a></li>
             {% if user.is_authenticated %}
-            <li><a href="{% url 'saved' %}" type="button"  class="link"><i class="fa-solid fa-bookmark"></i>Kaydedilenler</a></li>
-            <li><a href="{% url 'tags' %}" type="button"  class="link"><i class="fa-solid fa-tags"></i>Etiketler</a></li>
+            <li {% if request.resolver_match.url_name == 'saved_page' %} style="background-color: rgb(180, 180, 180);" {% endif %}><a href="{% url 'saved_page' %}" type="button"  class="link"><i class="fa-solid fa-bookmark"></i>Kaydedilenler</a></li>
+            <li {% if request.resolver_match.url_name == 'tags' %} style="background-color: rgb(180, 180, 180);" {% endif %}><a href="{% url 'tags' %}" type="button"  class="link"><i class="fa-solid fa-tags"></i>Etiketler</a></li>
             <li><a href="" type="button" data-bs-toggle="modal" data-bs-target="#exampleModal"><i class="fa-solid fa-right-from-bracket"></i> Çıkış</a></li>
             {% else %}
-            <li><a href="{% url 'register' %}" type="button"  class="link"><i class="fa-solid fa-user-plus"></i>Kayıt ol</a></li>
-            <li><a href="{% url 'login' %}" type="button"  class="link"><i class="fa-solid fa-right-to-bracket"></i></i>Giriş</a></li>
+            <li {% if request.resolver_match.url_name == 'register' %} style="background-color: rgb(180, 180, 180);" {% endif %}><a href="{% url 'register' %}" type="button"  class="link"><i class="fa-solid fa-user-plus"></i>Kayıt ol</a></li>
+            <li {% if request.resolver_match.url_name == 'login' %} style="background-color: rgb(180, 180, 180);" {% endif %}><a href="{% url 'login' %}" type="button"  class="link"><i class="fa-solid fa-right-to-bracket"></i></i>Giriş</a></li>
             {% endif %}
         </ul>
     </div>
@@ -54,7 +58,7 @@
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h1 class="modal-title fs-5" id="exampleModalLabel">Modal title</h1>
+                    <h1 class="modal-title fs-5" id="exampleModalLabel">Çıkış yap</h1>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">

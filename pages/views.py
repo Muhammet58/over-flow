@@ -11,9 +11,12 @@ def index(request):
     data = {}
 
     if filter_query and filter_query != '':
-        questions = question.objects.filter(Q(title__icontains=filter_query) | Q(context__icontains=filter_query)).order_by('-published_date').annotate(ann_answer=Count('answer')).values()
+        questions = question.objects.filter(Q(title__icontains=filter_query) | Q(context__icontains=filter_query)).order_by('-published_date').annotate(ann_answer=Count('answer')).values(
+            'user__username', 'id', 'title', 'ann_answer', 'votes', 'view', 'published_date')
     else:
-        questions = question.objects.all().order_by('-published_date').annotate(ann_answer=Count('answer')).values()
+        questions = question.objects.all().order_by('-published_date').annotate(ann_answer=Count('answer')).values(
+            'user__username', 'id', 'title', 'ann_answer', 'votes', 'view', 'published_date')
+            
 
     for q in questions:
         q['tag_names'] = question.objects.get(id=q['id']).tags.values_list('name', flat=True)
@@ -30,7 +33,7 @@ def question_detail(request, pk):
     questions = get_object_or_404(question, id=pk)
     saved_que = saved.objects.filter(user=request.user.id).values_list('que__id', flat=True)
 
-    session_key = f'{pk}_{request.user.id}' if request.user.is_authenticated else f'{pk}'
+    session_key = f'{pk}{request.user.id}' if request.user.is_authenticated else f'{pk}'
 
     if request.session.get(session_key, False):
         pass
@@ -85,7 +88,6 @@ def answer_question(request, pk):
 
 
 
-
 def update(request, pk):
     data = get_object_or_404(answer, id=pk)
 
@@ -99,32 +101,6 @@ def update(request, pk):
     form = answerForm(instance=data)
     return render(request, 'forms/answer_forms.html', {'form': form})
     
-
-def my_saved(request):
-    mySaved = saved.objects.filter(user=request.user.id).select_related('que')
-    mySaved_answer_count = mySaved.annotate(answer_count=Count('que__answer'))
-    return render(request, 'pages/saved.html', {'mySaved': mySaved_answer_count})
-
-
-
-def save(request, pk):
-    que = get_object_or_404(question, id=pk)
-    save, created = saved.objects.get_or_create(user=request.user, que=que)
-
-    if not created:
-        save.delete()
-    return redirect('questionDetail', pk=pk)
-
-
-
-def delete_save(request, pk):
-    que = get_object_or_404(question, id=pk)
-    save, created = saved.objects.get_or_create(user=request.user, que=que)
-
-    if not created:
-        save.delete()
-    return redirect('saved')
-
 
 
 def comment_form(request, pk):
@@ -193,11 +169,14 @@ def ques_comment_form(request, pk):
     return render(request, 'pages/quesCommentForm.html', {'form' :form})
 
 
+
 def increase(request, question_id):
     to_increase = get_object_or_404(question, id=question_id)
     to_increase.user_vote(request.user, 1)
 
     return JsonResponse({"increase_vote": to_increase.votes})
+
+
 
 def decrease(request, question_id):
     to_decrease = get_object_or_404(question, id=question_id)
@@ -207,16 +186,50 @@ def decrease(request, question_id):
 
 
 
-
-
 def answer_vote_increase(request, answer_id):
     to_increase = get_object_or_404(answer, id=answer_id)
     to_increase.user_answer_vote(request.user, 1)
 
     return JsonResponse({"increase_vote": to_increase.votes})
 
+
+
 def answer_vote_decrease(request, answer_id):
     to_decrease = get_object_or_404(answer, id=answer_id)
     to_decrease.user_answer_vote(request.user, -1)
 
     return JsonResponse({"decrease_vote": to_decrease.votes})
+
+
+
+def que_delete(request, pk):
+    que = question.objects.get(id=pk)
+    que.delete()
+    return redirect('index')
+
+
+def ans_delete(request, pk):
+    ans = answer.objects.get(id=pk)
+    ans.delete()
+    return redirect("questionDetail", pk=ans.answerToTheQuestion.id )
+
+
+def queCommentDelete(request, pk):
+    que_comment = QuesComment.objects.get(id=pk)
+    que_comment.delete()
+    return redirect('questionDetail', pk=que_comment.commentQues.id)
+
+
+def ansCommentDelete(request, pk):
+    ans_comment = comment.objects.get(id=pk)
+    ans_comment.delete()
+    return redirect('questionDetail', pk=ans_comment.comment_answer.answerToTheQuestion.id)
+
+
+
+def timeline(request, pk):
+    question_timeline = question.objects.get(id=pk)
+    data = {
+        "question_timeline": question_timeline,
+    }
+    return render(request, 'pages/timeline.html', data)

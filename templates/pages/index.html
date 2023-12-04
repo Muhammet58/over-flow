@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
 {% load static %}
+{% load humanize %}
 
 {% block css_files %}
 <style>
@@ -47,7 +48,7 @@
 
     <div style="margin-left: 270px; margin-top: 15px; margin-bottom: 80px;">
         <h3 style="text-transform: uppercase; font-weight: 400;">Sorular</h3>
-        <a href="{% url 'formPage' %}" class="btn btn-primary" style="position: absolute; right: 9rem; top: 1rem;">Soru sor</a>
+        <a href="{% if user.is_authenticated %} {% url 'formPage' %} {% else %} {% url 'login' %} {% endif %}" class="btn btn-primary" style="position: absolute; right: 9rem; top: 1rem;">Soru sor</a>
         <p style="position: absolute; top: 80px; font-weight: 500; font-size: large;">{{ question_count }} soru</p>
     </div>
 
@@ -68,11 +69,11 @@
             {% endif %}
 
             {% for tag_name in item.tag_names %}
-                <a {% if forloop.counter == 1 %} style="margin-left: 250px; " {% endif %} href="{% url 'tag_detail' name=tag_name %}" class="tag">{{ tag_name }}</a>
+                <a {% if forloop.counter == 1 %} style="margin-left: 250px; " {% endif %} href="{% if user.is_authenticated %} {% url 'tag_detail' name=tag_name %} {% else %} {% url 'login' %} {% endif %}" class="tag">{{ tag_name }}</a>
             {% endfor %}
 
             <div class="float-end">
-                {{ item.user__username }} tarafından oluşturuldu &nbsp; {{item.published_date|date:"SHORT_DATE_FORMAT" }}
+                {{ item.user__username }} tarafından oluşturuldu &nbsp; {{item.published_date|naturaltime }}
             </div>
         </div>
     </div>
@@ -80,7 +81,9 @@
 </div>
 {% block js_files %}
 <script>
-
+    if ( window.history.replaceState ) {
+        window.history.replaceState( null, null, window.location.href );
+    }
 </script>
 {% endblock %}
 {% endblock %}
