@@ -1,6 +1,6 @@
 from django.http import HttpResponseRedirect, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
-from .models import Tags, comment, question, answer, saved, QuesComment
+from .models import Tags, comment, question, answer, saved, QuesComment, Vote
 from .forms import answerForm, questionForm, commentForm,QuesCommentForm
 from django.db.models import Count
 from  django.db.models import Q
@@ -229,7 +229,44 @@ def ansCommentDelete(request, pk):
 
 def timeline(request, pk):
     question_timeline = question.objects.get(id=pk)
+
+    answer_timeline = answer.objects.filter(answerToTheQuestion=question_timeline.id)
+    comment_timeline = QuesComment.objects.filter(commentQues=question_timeline.id)
+    vote_timeline = Vote.objects.filter(question=question_timeline)
+
+    activity_count = sum([answer_timeline.count(), comment_timeline.count(), vote_timeline.count()])
+
+    timeline = []
+
+    for ans in answer_timeline:
+        timeline.append({
+            "date": ans.published_date,
+            "activity_type": "Cevap",
+            "user": ans.user,
+            "comment": '',
+        })
+
+    for cmnt in comment_timeline:
+        timeline.append({
+            "date": cmnt.PubDate,
+            "activity_type": "Yorum",
+            "user": cmnt.commentUser,
+            "comment": cmnt.comment,
+        })
+
+    for vote in vote_timeline:
+        timeline.append({
+            "date": vote.pubDate,
+            "activity_type": "Oy",
+            "user": vote.user,
+            "comment": '',
+        })
+
+    timeline = sorted(timeline, key=lambda x: x['date'], reverse=True)
+
     data = {
         "question_timeline": question_timeline,
+        "timeline": timeline,
+        "activity_count": activity_count,
     }
     return render(request, 'pages/timeline.html', data)

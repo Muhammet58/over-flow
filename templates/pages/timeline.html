@@ -1,9 +1,92 @@
 {% extends 'base.html' %}
 
+{% block css_files %}
+<style>
+    table {
+        position: absolute;
+        top: 13rem;
+        left: 32rem;
+        width: 975px;
+        border: 1px solid #a8a8a8;
+        border-radius: 10px;
+    }
+
+    .content-table {
+        border-collapse: collapse;
+        margin: 25px 0px;
+        min-width: 400px;
+    }
+
+    .content-table th {
+        background-color: #009879;
+        color: #fff;
+        text-align: left;
+        font-weight: bold;
+    }
+
+    .content-table th,
+    .content-table td {
+      padding: 12px 15px;
+    }
+
+    .content-table tbody tr {
+      border-bottom: 1px solid #a8a8a8;
+    }
+
+    .ans {
+      border: 1px solid #aaa;
+      padding: 3px 7px;
+      border-radius: 5px;
+      background-color: seagreen;
+      color: #fff;
+    }
+
+    .cmnt {
+      border: 1px solid #aaa;
+      padding: 3px 6px;
+      border-radius: 5px;
+      background-color: royalblue;
+      color: #fff;
+    }
+
+    .vote {
+      border: 1px solid #aaa;
+      padding: 3px 19px;
+      border-radius: 5px;
+      background-color: crimson;
+      color: #fff;
+    }
+
+</style>
+{% endblock %}
+
 {% block context %}
 <div class="container">
-    <p style="position: absolute; top: 5rem; left: 32rem; font-size: 20px; word-wrap: break-word; width: 50%;">{{ question_timeline.title}}<br>
+    <p style="position: absolute; top: 5rem; left: 32rem; font-size: 20px; word-wrap: break-word; width: 50%; border-bottom: 1px solid #a8a8a8; padding-bottom: 10px;">{{ question_timeline.title}}<br>
         sorusu için zaman çizelgesi
     </p>
+    
+    <p style="position: absolute; top: 12rem; left: 32rem; font-size: 18px; font-weight: 700;">{{activity_count}} etkinlik</p>
+    <table class="content-table">
+      <tr>
+        <th>Tarih</th>
+        <th>İşlem</th>  
+        <th>Kullanıcı</th>
+        <th>Yorum</th>
+      </tr>
+      {% if timeline|length == 0 %}
+      <tr>
+        <div style="position: absolute; top: 17.7rem; left: 32rem; width: 60.91rem; text-align: center; color: black; font-weight: 500; border-radius: 0;" class="alert alert-dark">Herhangi bir işlem geçmişi bulunmamaktadır !</div>
+      </tr>
+      {% endif %}
+      {% for time in timeline %}
+      <tr>
+        <td> {{time.date}} </td>
+        <td><span class="{% if time.activity_type == 'Cevap' %} ans {% elif time.activity_type == 'Yorum' %} cmnt {% elif time.activity_type == 'Oy' %} vote {% endif %}">{{time.activity_type}}</span></td>
+        <td> {{time.user}} </td>
+        <td style="max-width: 150px; word-wrap: break-word; font-size: 13px;"> {{time.comment}} </td>
+      </tr>
+      {% endfor %}
+    </table>
 </div>
 {% endblock %}
