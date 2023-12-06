@@ -1,0 +1,147 @@
+{% extends 'base.html' %}
+
+{% block title %}profile{% endblock %}
+
+{% block css_files %}
+<style>
+    .img {
+        position: absolute;
+        top: 75px;
+        border: 1px solid #ccc;
+        border-radius: 10px;
+        left: 32rem;
+        width: 180px;
+        height: 180px;
+    }
+
+    .profile_edit_button {
+        border: 1px solid #ccc;
+        position: absolute;
+        text-align: center;
+        line-height: 33px;
+        text-decoration: none;
+        color: black;
+        border-radius: 10px;
+        position: absolute;
+        top: 75px;
+        right: 26rem;
+        width: 150px;
+        height: 39px
+    }
+
+
+    .profile_button {
+        border-radius: 15px;
+        text-align: center;
+        line-height: 22px;
+        text-decoration: none;
+        color: black;
+        position: absolute;
+        top: 17rem;
+        left: 32rem;
+        width: 70px;
+        height: 25px;
+        transition: .3s ease;
+    }
+
+
+    .activity_button {
+        border-radius: 15px;
+        line-height: 22px;
+        text-decoration: none;
+        color: black;
+        position: absolute;
+        text-align: center;        
+        top: 17rem;
+        left: 37rem;
+        width: 70px;
+        height: 25px;
+        transition: .3s ease;
+    }
+
+
+    .saved_button {
+        border-radius: 15px;
+        line-height: 22px;
+        text-decoration: none;
+        color: black;
+        position: absolute;
+        text-align: center;        
+        top: 17rem;
+        left: 42.5rem;
+        width: 110px;
+        height: 25px;
+        transition: .3s ease;
+    }
+
+
+    .profile_button:hover {
+        background-color: lightgray;
+    }
+
+    .saved_button:hover {
+        background-color: lightgray;
+    }
+
+    .button  {
+        text-decoration: none;
+        color: black;
+        padding-left: 1rem;
+        transition: .3s ease;
+        border-radius: 15px;
+        width: 130px;
+    }
+
+    .button:hover{
+        background: lightgray;
+    }
+
+
+    .tag {
+        color: rgb(24, 67, 206);
+        background: #c7dbe2;
+        width: 70px;
+        height: 20px;
+        border-radius: 5px;
+        text-align: center;
+        font-size: small;
+    }
+
+    
+</style>
+{% endblock %}
+
+{% block context %}
+<div class="container">
+    <div style="display: flex;">
+        <a href=""><img class="img" src="{{ user_profile.profile_picture.url }}" alt="{{ user_profile.user.username }} profile photo"></a>
+        <h1 style="position: absolute; top: 110px; left: 44rem; font-weight: 400;">{{  user_profile.user.username }}</h1>
+    </div>
+    <a class="profile_button" href="{% url 'user_profile' user_profile.user.username %}">profil</a>
+    <a class="activity_button" {% if request.resolver_match.url_name == "user_profile_answers" %} style="background: orange; color: white;" {% endif %} href="{% url 'user_profile_answers' user_profile.user.username %}">aktivite</a> 
+    <a class="button" style="position: absolute; top: 20rem; left: 32rem;" href="{% url 'user_profile_activity' user_profile.user.username %}">Özet</a> 
+    <a class="button" style="position: absolute; top: 22rem; left: 32rem; {% if request.resolver_match.url_name == 'user_profile_answers' %} background: lightgray; {% endif %}" href="{% url 'user_profile_answers' user_profile.user.username %}">Yanıtlar</a> 
+    <a class="button" style="position: absolute; top: 24rem; left: 32rem;" href="{% url 'user_profile_questions' user_profile.user.username %}">Sorular</a> 
+    <a class="button" style="position: absolute; top: 26rem; left: 32rem;" href="{% url 'user_profile_tags'  user_profile.user.username %}">Etiketler</a>
+
+    <div>
+        <p style="position: absolute; top: 20rem; left: 47rem; font-size: 23px;">{{ answered_questions_count }} Yanıt</p>
+        <div style="border: 1px solid #ccc; width: 760px; height: 650px; position: absolute; top: 22rem; left: 47rem; border-radius: 10px; overflow: auto;">
+            {% for ans in user_answer %}
+            <div style="border-bottom: 1px solid #ccc; padding: 25px 20px;">
+                <div style="position: relative; left: 0px;">{{ ans.votes }} oylar</div>
+                <a href="{% url 'questionDetail' ans.answerToTheQuestion.id %}" style="text-decoration: none; font-size: 20px;">{{ ans.answerToTheQuestion.title }}</a><br>
+                {% for tag in ans.answerToTheQuestion.tags.all %}
+                    <div class="tag" style="position: relative; top: 10px; display: inline-block;">
+                        <a style="text-decoration: none;" href="{% url 'tag_detail' tag %}">{{ tag }}</a>
+                    </div>
+                {% endfor %}
+                <div style="float: right; position: relative; right: 10px;">yanıtlandı : {{ ans.published_date }}</div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    <div style="position: absolute; top: 65rem; left: 60rem; border: 1px solid white; width: 10px;"></div>
+</div>
+
+{% endblock %}

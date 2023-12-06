@@ -1,0 +1,159 @@
+{% extends 'base.html' %}
+
+{% block title %}profile{% endblock %}
+
+{% block css_files %}
+<style>
+    .img {
+        position: absolute;
+        top: 75px;
+        border: 1px solid #ccc;
+        border-radius: 10px;
+        left: 32rem;
+        width: 180px;
+        height: 180px;
+    }
+
+    .profile_edit_button {
+        border: 1px solid #ccc;
+        position: absolute;
+        text-align: center;
+        line-height: 33px;
+        text-decoration: none;
+        color: black;
+        border-radius: 10px;
+        position: absolute;
+        top: 75px;
+        right: 26rem;
+        width: 150px;
+        height: 39px
+    }
+
+
+    .profile_button {
+        border-radius: 15px;
+        text-align: center;
+        line-height: 22px;
+        text-decoration: none;
+        color: black;
+        position: absolute;
+        top: 17rem;
+        left: 32rem;
+        width: 70px;
+        height: 25px;
+        transition: .3s ease;
+    }
+
+
+    .activity_button {
+        border-radius: 15px;
+        line-height: 22px;
+        text-decoration: none;
+        color: black;
+        position: absolute;
+        text-align: center;        
+        top: 17rem;
+        left: 37rem;
+        width: 70px;
+        height: 25px;
+        transition: .3s ease;
+    }
+
+
+    .saved_button {
+        border-radius: 15px;
+        line-height: 22px;
+        text-decoration: none;
+        color: black;
+        position: absolute;
+        text-align: center;        
+        top: 17rem;
+        left: 42.5rem;
+        width: 110px;
+        height: 25px;
+        transition: .3s ease;
+    }
+
+
+    .activity_button:hover {
+        background-color: lightgray;
+    }
+
+    .saved_button:hover {
+        background-color: lightgray;
+    }
+
+
+    .tag {
+        color: rgb(24, 67, 206);
+        background: #c7dbe2;
+        width: 70px;
+        height: 20px;
+        border-radius: 5px;
+        text-align: center;
+        font-size: small;
+    }
+
+    
+</style>
+{% endblock %}
+
+{% block context %}
+<div class="container">
+    <div style="display: flex;">
+        <a href="{% url 'user_profile' user_profile.user.username %}"><img class="img" src="{{ user_profile.profile_picture.url }}" alt="{{ user_profile.user.username }} profile photo"></a>
+        <h1 style="position: absolute; top: 110px; left: 44rem; font-weight: 400;">{{  user_profile.user.username }}</h1>
+    </div>
+    <a class="profile_button" {% if request.resolver_match.url_name == "user_profile" %} style="background: orange; color: white;" {% endif %} href="{% url 'user_profile' user_profile.user.username %}">Profil</a>
+    <a class="activity_button" href="{% url 'user_profile_activity' user_profile.user.username %}">Aktivite</a>
+    <p style="position: absolute; top: 20.5rem; left: 31.7rem; font-size: 23px;">İstatistikler</p>
+    <div style="display: flex; position: absolute; top: 23rem; left: 31.5rem; border: 1px solid #ccc; width: 195px; border-radius: 10px; padding: 10px 20px 0px 20px;">
+         <p>
+             <span style="font-size: 18px;">{{ answered_questions_count }}</span><br>
+             Yanıtlar
+         </p>
+         <p style="margin-left: 50px;">
+             <span style="font-size: 18px;">{{ asked_questions_count }}</span><br>
+             Sorular
+         </p>
+    </div>
+    <p style="font-size: 23px; position: absolute; top: 20.5rem; left: 50.5rem;">Hakkında</p>
+    {% if user_profile.about %}
+        <span style="position: absolute; top: 23rem; left: 50.6rem;">{{ user_profile.about|safe }}</span>
+    {% else %}
+    <div style="width: 600px; height: 100px; position: absolute; top: 23rem; left: 50.5rem; border: 1px solid #ccc; border-radius: 10px; text-align: center; line-height: 100px; font-size: small;">
+        Bu kullanıcı için herhangi bir bilgi yok !
+    </div>            
+    {% endif %}
+    <p style="position: absolute; top: 32rem; left: 50.5rem; font-size: 23px">En popüler etiketler</p>
+    <div style="border: 1px solid #ccc; border-radius: 10px; width: 600px; height: 250px; position: absolute; top: 34.5rem; left: 50.5rem;  overflow: hidden;">
+         {% for tag in order_tags|slice:":5" %}
+             <div style="border-bottom: 1px solid #ccc; padding: 15px 0px 15px 0px;">
+                 <div class="tag" style="margin-left: 20px;">
+                     <a href="{% url 'tag_detail' tag.name %}" style="text-decoration: none;">{{ tag.name }}</a>
+                 </div>
+                 <div style="float: right; position: relative; bottom: 25px; right: 10px; font-size: 18px;">
+                     {{ tag.que_count }} gönderiler
+                 </div>
+             </div>
+         {% endfor %}
+    </div>
+    <p style="position: absolute; top: 53rem; left: 50.5rem; font-size: 23px;">En popüler gönderiler</p>
+    <div style="border: 1px solid #ccc; border-radius: 10px; width: 600px; height: 350; position: absolute; top: 55.5rem; left: 50.5rem; overflow: hidden;">
+        {% for que in user_question|slice:":5" %}
+            <div style="border-bottom: 1px solid #ccc; padding: 15px 0px 0px 0px;">
+                <div style="margin-left: 20px;">
+                    <span style="position: relative; border: 1px solid #ccc; padding: 5px 20px 5px 20px; border-radius: 7px; float: left; margin-right: 10px;">{{ que.votes }}</span>
+                    <div style="overflow: hidden; padding-right: 10px;">
+                        <a style="text-decoration: none; font-size: 17px; display: block; word-wrap: break-word; width: 370px; margin-bottom: 5px;" href="{% url 'questionDetail' que.id %}">{{ que.title }}</a>
+                        <span style="float: right; position: relative; bottom: 27px;">{{ que.published_date|date:"SHORT_DATE_FORMAT" }}</span>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+    <div style="position: absolute; top: 80rem; left: 60rem; border: 1px solid white; width: 10px;"></div>
+</div> 
+
+
+{% endblock %}

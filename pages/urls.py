@@ -19,5 +19,10 @@ urlpatterns = [
     path('answer-delete/<int:pk>', views.ans_delete, name='answer_delete'),
     path('que-comments-delete/<int:pk>', views.queCommentDelete, name='question_comments_delete'),
     path('ans-comments-delete/<int:pk>', views.ansCommentDelete, name='answer_comments_delete'),
-    path('timeline/<int:pk>', views.timeline, name='timeline')
+    path('timeline/<int:pk>', views.timeline, name='timeline'),
+    path('user-profile/<str:username>', views.user_profile, name='user_profile'),
+    path('user-profile-activity/<str:username>', views.user_profile_activity, name='user_profile_activity'),
+    path('user-profile-answers/<str:username>', views.user_profile_answers, name='user_profile_answers'),
+    path('user-profile-questions/<str:username>', views.user_profile_questions, name='user_profile_questions'),
+    path('user-profile-tags/<str:username>', views.user_profile_tags, name='user_profile_tags'),
 ]

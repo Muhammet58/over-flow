@@ -4,6 +4,7 @@ from .models import Tags, comment, question, answer, saved, QuesComment, Vote
 from .forms import answerForm, questionForm, commentForm,QuesCommentForm
 from django.db.models import Count
 from  django.db.models import Q
+from account.models import UserProfile
 
 
 def index(request):
@@ -276,3 +277,95 @@ def timeline(request, pk):
         "activity_count": activity_count,
     }
     return render(request, 'pages/timeline.html', data)
+
+
+
+def user_profile(request, username):
+    user_profile = UserProfile.objects.get(user__username=username)
+    answered_questions_count = answer.objects.filter(user__username=username).count()
+    user_question = question.objects.filter(user__username=username).order_by('-votes', '-view')
+
+
+    tags = Tags.objects.filter(question__in=user_question)
+    used_tags =  tags.annotate(que_count=Count('question')).order_by('-que_count')
+
+    data = {
+        "user_profile": user_profile, 
+        "answered_questions_count": answered_questions_count,
+        "asked_questions_count": user_question.count(),
+        'user_question': user_question,
+        "order_tags": used_tags,
+    }
+    return render(request, "pages/user-profile.html", data)
+
+
+
+
+
+def user_profile_activity(request, username):
+    user_profile = UserProfile.objects.get(user__username=username)
+    user_question = question.objects.filter(user__username=username).order_by('-votes')
+    user_answer = answer.objects.filter(user__username=username).order_by('-votes')
+
+    tags = Tags.objects.filter(question__in=user_question)
+    used_tags = tags.annotate(que_count=Count('question')).order_by('-que_count')
+
+    que_votes = sum(user_question.values_list('votes', flat=True))
+    ans_votes = sum(user_answer.values_list('votes', flat=True))
+    all_votes = que_votes + ans_votes
+
+    data = {
+        "user_profile": user_profile, 
+        "user_question": user_question, 
+        "user_answer": user_answer,
+        "order_tags": used_tags,
+        "all_votes": all_votes,
+        "que_votes": que_votes,
+        "ans_votes": ans_votes,
+    }
+    return render(request, "pages/user_profile_activity.html", data)
+
+
+
+
+
+def user_profile_answers(request, username):
+    user_profile = UserProfile.objects.get(user__username=username)
+    user_answer = answer.objects.filter(user__username=username).order_by('-votes')
+
+    data = {
+        "user_profile": user_profile, 
+        "user_answer": user_answer,
+        "answered_questions_count": user_answer.count(),
+    }
+    return render(request, "pages/user_profile_answers.html", data)
+
+
+
+def user_profile_questions(request, username):
+    user_profile = UserProfile.objects.get(user__username=username)
+    user_question = question.objects.filter(user__username=username).order_by('-votes')
+
+    data = {
+        "user_profile": user_profile, 
+        "asked_questions": user_question,
+        "asked_questions_count": user_question.count(),
+    }
+    return render(request, "pages/user_profile_question.html", data)
+
+
+
+
+def user_profile_tags(request, username):
+    user_profile = UserProfile.objects.get(user__username=username)
+    user_question = question.objects.filter(user__username=username)
+    
+    tags = Tags.objects.filter(question__in=user_question)
+    used_tags = tags.annotate(que_count=Count('question')).order_by('-que_count')
+
+    data = {
+        "user_profile": user_profile, 
+        "tag_count": used_tags.count(),
+        "order_tags": used_tags,
+    }
+    return render(request, "pages/user_profile_tags.html", data)

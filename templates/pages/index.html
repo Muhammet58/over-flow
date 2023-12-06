@@ -72,8 +72,8 @@
                 <a {% if forloop.counter == 1 %} style="margin-left: 250px; " {% endif %} href="{% if user.is_authenticated %} {% url 'tag_detail' name=tag_name %} {% else %} {% url 'login' %} {% endif %}" class="tag">{{ tag_name }}</a>
             {% endfor %}
 
-            <div class="float-end">
-                {{ item.user__username }} tarafından oluşturuldu &nbsp; {{item.published_date|naturaltime }}
+            <div class="float-end" style="font-size: 14px;">
+                <a href="{% if item.user__username == request.user.username %} {% url 'profile_page' %} {% elif user.is_authenticated %} {% url 'user_profile' item.user__username %} {% else %} {% url 'login' %} {% endif %}">{{ item.user__username }}</a> &nbsp; {{item.published_date|naturaltime }} &nbsp; soruldu
             </div>
         </div>
     </div>
