@@ -82,7 +82,13 @@
         opacity: 1;
     }
 
+    .green {
+        background: lightgreen;
+    }
 
+    .gray {
+        background: #ccc;
+    }
 </style>
 {% endblock %}
 
@@ -123,6 +129,21 @@
         <div style="position: relative; top: 430px; left: 180px;">
             {% for tag in item.tags.all %}
                 <a href="{% url 'tag_detail' tag.name %}" class="tag" style="display: inline-block; margin-right: 5px;">{{ tag.name }}</a>
+            {% endfor %}
+        </div>
+
+        <div style="position: absolute; top: 10.5rem; left: 98rem; font-size: 20px;">
+            <p>Bağlantılı</p>
+            {% if connected|length == 0 %}
+                <div style="font-size: 15px; background: lightgray; border-radius: 5px; padding: 0px 10px; width: 250px;">Bağlantılı soru bulunmamaktadır !</div>
+            {% endif %}
+            {% for connect in connected %}
+                <div style="font-size: 15px; margin-bottom: 5px;"> <span class="{% if connect.votes <= 0 %} gray {% endif %} green" style="border: 1px solid #a8a8a8; padding: 0px 15px; margin-right: 15px; border-radius: 5px;">{{connect.votes}}</span> <a href="{% url 'questionDetail' connect.id %}" style="text-decoration: none;">{{connect.title}}</a><br> </div>
+            {% endfor %}
+
+            <p style="position: relative; top: 5rem;">İlgili</p>
+            {% for relate in related %}
+                <div style="font-size: 15px; margin-bottom: 10px; position: relative; top: 75px; display: flex;"> <span  class="{% if relate.votes <= 0 %} gray {% endif %} green" style="border: 1px solid #a8a8a8; padding: 0px 15px; margin-right: 15px; border-radius: 5px; height: 25px;">{{relate.votes}}</span> <a href="{% url 'questionDetail' relate.id %}" style="text-decoration: none; word-wrap: break-word; width: 150px;">{{relate.title}}</a><br> </div>
             {% endfor %}
         </div>
 

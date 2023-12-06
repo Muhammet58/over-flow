@@ -42,14 +42,20 @@ def question_detail(request, pk):
         obje.save()
         request.session[session_key] = True
                                     
-    question_answers = answer.objects.filter(answerToTheQuestion__id=pk).order_by('-published_date')
+    question_answers = answer.objects.filter(answerToTheQuestion__id=pk).order_by('-votes')
     question_comments = QuesComment.objects.filter(commentQues__id=pk).order_by('-PubDate')
     answer_count = question_answers.count()
+
+    connected = question.objects.filter(~Q(id=obje.id), Q(title__icontains=obje.title))
+    related = question.objects.filter(tags__in=obje.tags.all()).exclude(id=pk)
+
 
     form = answerForm()
     return render(request, 'pages/detail.html', {'item': questions, 'answer': question_answers,
                                                   'saved_que': saved_que, 'answer_count': answer_count,
                                                   'question_comments': question_comments,
+                                                  'connected': connected,
+                                                  'related': related,
                                                   'form': form
                                                   })
 
