@@ -1,0 +1,64 @@
+{% extends 'base.html' %}
+
+{% block title %}
+get_report
+{% endblock %}
+
+{% block css_files %}
+<link rel="stylesheet" href="//code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css">
+<style>
+    .box {
+        display: grid;
+        position: absolute;
+        top: 12rem;
+        left: 36rem;
+        border: 1px solid #a8a8a8;
+        padding: 10rem;
+        border-radius: 10px;
+    }
+</style>
+{% endblock %}
+
+{% block context %}
+<div class="container">
+    <div style="position: absolute; top: 8rem; left: 36.5rem;">
+        {% for msg in messages %}
+            {% if msg.level == DEFAULT_MESSAGE_LEVELS.SUCCESS %}
+                <div class="alert alert-success" style="width: 52rem; transition: 0.5s ease-in-out;">{{msg}}</div>
+            {% endif %}
+            {% if msg.level == DEFAULT_MESSAGE_LEVELS.ERROR %}
+                <div class="alert alert-danger" style="width: 52rem; transition: 0.5s ease-in-out;">{{msg}}</div>
+            {% endif %}
+        {% endfor %}
+    </div>
+    <div class="box">
+        <p style="position: absolute; padding: 20px;">NOT:<br>eğer tarih seçerseniz seçtiğiniz tarihe ait sorular e-posta adresinize pdf formatında gelecektir.
+            Tarih seçmeden rapor al butonuna basarsanız size ait tüm sorular e-posta adresinize pdf formatında gelecektir.</p>
+        <form action="{% url 'get_report' %}" method="POST">
+            {% csrf_token %}
+            <label class="form-label" style="font-weight: 500; font-size: 17px;" for="dateInput">Tarih : </label>
+            <input class="form-control" style="width: 33rem; height: 3rem; border: 1px solid #a8a8a8;" type="date"  id="dateInput" name="selected_date">
+            <button type="submit" style="position: absolute; top: 20rem; left: 19rem; width: 15rem;" class="btn btn-primary" id="get_report_btn" onclick="clickEvents()">rapor al</button>
+        </form>
+    </div>
+</div>
+{% block js_files %}
+<script>
+    getReportBtn = document.getElementById('get_report_btn')
+    alert = document.querySelector('.alert')
+    
+    if (getReportBtn) {
+        setTimeout (function clickEvents () {
+            if (alert) {
+                alert.style.opacity = 0
+            }
+        }, 2000)
+    }
+    
+
+    if ( window.history.replaceState ) {
+        window.history.replaceState( null, null, window.location.href );
+    }
+</script>
+{% endblock %}
+{% endblock %}

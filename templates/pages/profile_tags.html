@@ -22,7 +22,6 @@
         text-decoration: none;
         color: black;
         border-radius: 10px;
-        position: absolute;
         top: 75px;
         right: 26rem;
         width: 150px;
@@ -131,7 +130,7 @@
         <p style="position: absolute; top: 20rem; left: 47rem; font-size: 23px;">{{ tag_count }} Etiket</p>
         <div style="border: 1px solid #ccc; border-radius: 10px; width: 600px; height: 307px; position: absolute; top: 22rem; left: 47rem; overflow: auto;">
             {% for tag in order_tags %}
-                <div style="border-bottom: 1px solid #ccc; padding: 15px 0px 15px 0px;">
+                <div style="border-bottom: 1px solid #ccc; padding: 15px 0 15px 0;">
                     <div class="tag" style="margin-left: 20px;">
                         <a href="{% url 'tag_detail' tag.name %}" style="text-decoration: none;">{{ tag.name }}</a>
                     </div>

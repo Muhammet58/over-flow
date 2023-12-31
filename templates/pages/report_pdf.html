@@ -1,0 +1,42 @@
+{% load static %}
+
+{% block context %}
+    <div style="position: absolute; right: 20px; font-size: 40px; text-align: center;">
+        <p>Raporun gönderildiği tarih<br>
+            {{ get_report_date }}</p>
+    </div>
+    <img style="text-align: center; width: 70rem; margin-top: 100px;" src="{{ image_path }}" alt="Image">
+    {% if not selected_date %}
+    <div style="text-align: center; font-size: 70px; font-weight: bold; margin-top: 200px;">
+        Sorular ve Cevaplar Raporu
+    </div>
+    {% else %}
+        <div style="text-align: center; font-size: 70px; font-weight: bold; margin-top: 200px;">
+            {{ selected_date|date:"d F Y" }} Tarihine ait Sorular ve Cevaplar Raporu
+        </div>
+    {% endif %}
+    {% for item in questions %}
+        <div style="border: 1px solid black; border-radius: 25px; {% if forloop.first %}margin-top: 20rem;{% endif %} margin-bottom: 16rem; padding: 100px;">
+            <div style="text-align: center; font-size: 40px; font-weight: bold; border-bottom: 1px solid black;">
+                <span style="width: 400px; word-wrap: break-word; display: inline-block">{{ item.title }}</span>
+                <span style="position: absolute; right: 100px; font-size: 25px; color: coral; margin-top: 20px">{{ item.published_date|date:"d F Y H:i" }}</span>
+            </div>
+            <div style="font-size: 2rem; margin-top: 30px; word-wrap: break-word;">
+                {{ item.context|striptags|safe }}
+            </div>
+            <div style="text-align: center; font-size: 40px; font-weight: bold; margin-top: 10rem; border-bottom: 1px solid black; margin-bottom: 30px;">
+                Cevaplar
+            </div>
+            <div style="font-size: 2rem; margin-top: 30px;">
+                {% if item.answers.all|length == 0 %}
+                    <div style="color: crimson;">Bu soru için henüz bir cevap verilmemiş !</div>
+                {% endif %}
+                {% for answer in item.answers.all %}
+                    <div style="margin-left: 20px; margin-bottom: 15px;">
+                        {{ answer.answer|safe|striptags }} - <span style="color: gray;">{{ answer.user }}  {{ answer.published_date|date:"d F Y H:i" }}</span><br>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    {% endfor %}
+{% endblock %}

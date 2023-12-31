@@ -1,371 +1,476 @@
-from django.http import HttpResponseRedirect, JsonResponse
+from datetime import datetime
+from typing import Any
+
+from bs4 import Tag
+from django.urls import reverse_lazy, reverse
+from django.db.models.query import QuerySet, Prefetch
+from django.views.generic import ListView, DetailView, FormView, View
+from .tasks import GenerateReport
+from django.http import JsonResponse, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
-from .models import Tags, comment, question, answer, saved, QuesComment, Vote
-from .forms import answerForm, questionForm, commentForm,QuesCommentForm
+from .models import Tags, AnswerComments, Questions, Answers, QuestionComments, Vote, Save
+from .forms import answerForm, questionForm, commentForm, QuesCommentForm
 from django.db.models import Count
-from  django.db.models import Q
+from django.contrib import messages
+from django.db.models import Q
 from account.models import UserProfile
+import locale
+
+locale.setlocale(locale.LC_ALL, 'tr')
+
+class IndexView(ListView):
+    model = Questions
+    template_name = "pages/index.html"
+    context_object_name = 'questions'
+    paginate_by = 10
+
+    def get_queryset(self):
+        filter_query = self.request.POST.get('search')
+        if filter_query and filter_query != '':
+            queryset = self.model.objects.filter(Q(title__icontains=filter_query) | Q(context__icontains=f"[{filter_query}]")).order_by('-published_date').annotate(
+                ann_answer=Count('answers')).select_related('user').prefetch_related('tags')
+
+            if '[' in filter_query:
+                filter_query = filter_query.split('[')[1].split(']')[0]
+                queryset = self.model.objects.filter(tags__name__icontains=filter_query)
+
+            if 'kullanıcı:' in filter_query:
+                filter_query = filter_query.split(':')[1]
+                queryset = self.model.objects.filter(user__username__icontains=filter_query)
+        else:
+            queryset = self.model.objects.all().order_by('-published_date').annotate(ann_answer=Count('answers')).select_related('user').prefetch_related('tags')
+
+        return queryset
+
+    def post(self, request, **kwargs):
+        context = {
+            "questions": self.get_queryset(),
+            "question_count": self.get_queryset().count()
+        }
+        return render(request, 'pages/index.html', context)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['question_count'] = self.get_queryset().count()
+        context['tags'] = Tags.objects.all()
+        return context
 
 
-def index(request):
-    filter_query = request.POST.get('search')
-    data = {}
+class QuestionDetailView(DetailView):
+    model = Questions
+    template_name = "pages/detail.html"
 
-    if filter_query and filter_query != '':
-        questions = question.objects.filter(Q(title__icontains=filter_query) | Q(context__icontains=filter_query)).order_by('-published_date').annotate(ann_answer=Count('answer')).values(
-            'user__username', 'id', 'title', 'ann_answer', 'votes', 'view', 'published_date')
-    else:
-        questions = question.objects.all().order_by('-published_date').annotate(ann_answer=Count('answer')).values(
-            'user__username', 'id', 'title', 'ann_answer', 'votes', 'view', 'published_date')
-            
+    def get_object(self, **kwargs):
+        pk = self.kwargs.get('pk')
+        queryset = self.get_queryset().filter(id=pk)
+        obj = get_object_or_404(queryset)
+        return obj
 
-    for q in questions:
-        q['tag_names'] = question.objects.get(id=q['id']).tags.values_list('name', flat=True)
-
-    question_count = questions.count()
-    data['questions'] = questions
-    data['question_count'] = question_count
-
-    return render(request, 'pages/index.html', data)
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        obj = self.get_object()
 
 
-def question_detail(request, pk):
-    obje = question.objects.get(id=pk)
-    questions = get_object_or_404(question, id=pk)
-    saved_que = saved.objects.filter(user=request.user.id).values_list('que__id', flat=True)
+        user_id = self.request.user.id
+        session_key = f'{obj.id}{user_id}'
+        if not self.request.session.get(session_key, False):
+            obj.incrementViewCount()
+            obj.save()
+            self.request.session[session_key] = True
 
-    session_key = f'{pk}{request.user.id}' if request.user.is_authenticated else f'{pk}'
+        saved_questions = Save.objects.filter(user=self.request.user.id).select_related('user').values_list('questions__id', flat=True)
+        question_answers = Answers.objects.filter(answer_to_the_question=obj).order_by('-vote').select_related('answer_to_the_question', 'user')
+        question_comments = QuestionComments.objects.filter(comment_question=obj).order_by('-published_date').select_related('comment_question', 'comment_user')
+        tags = obj.tags.all()
 
-    if request.session.get(session_key, False):
-        pass
-    else:
-        obje.increment_view_count()
-        obje.save()
-        request.session[session_key] = True
-                                    
-    question_answers = answer.objects.filter(answerToTheQuestion__id=pk).order_by('-votes')
-    question_comments = QuesComment.objects.filter(commentQues__id=pk).order_by('-PubDate')
-    answer_count = question_answers.count()
+        answer_comments = AnswerComments.objects.filter(comment_answer__answer_to_the_question=obj).order_by('-published_date').select_related('comment_answer')
 
-    connected = question.objects.filter(~Q(id=obje.id), Q(title__icontains=obje.title))
-    related = question.objects.filter(tags__in=obje.tags.all()).exclude(id=pk)
+        connect = self.model.objects.filter(~Q(id=obj.id) & Q(title__icontains=obj.title))
+        related = self.model.objects.filter(tags__in=obj.tags.all()).exclude(id=obj.id)
 
-
-    form = answerForm()
-    return render(request, 'pages/detail.html', {'item': questions, 'answer': question_answers,
-                                                  'saved_que': saved_que, 'answer_count': answer_count,
-                                                  'question_comments': question_comments,
-                                                  'connected': connected,
-                                                  'related': related,
-                                                  'form': form
-                                                  })
-
-
-
-def formPage(request):
-    if request.method == 'POST':
-        form = questionForm(request.POST)
-        if form.is_valid():
-            item = form.save(commit=False)
-            item.user = request.user
-            item.save()
-            form.save_m2m()
-
-            return redirect('index')
-        
-    else:
-        form = questionForm()
-    return render(request, 'forms/forms.html', {'form': form})
-
-
-
-def answer_question(request, pk):
-    obje = question.objects.get(id=pk)
-    if request.method == 'POST':
-        form = answerForm(request.POST)
-        if form.is_valid():
-            item = form.save(commit=False)
-            item.user = request.user
-            item.answerToTheQuestion = obje 
-            item.save()
-            return redirect('questionDetail', pk=pk)
-    else:
+        question_comment_form = QuesCommentForm()
+        answer_comment_form = commentForm()
         form = answerForm()
-    return render(request, 'forms/answer_forms.html', {'form': form})
+
+        context['item'] = obj
+        context['answer'] = question_answers
+        context['saved_que'] = saved_questions
+        context['question_comments'] = question_comments
+        context['answer_comments'] = answer_comments
+        context['answer_count'] = question_answers.count()
+        context['tags'] = tags
+        context['connected'] = connect
+        context['related'] = related
+        context['queCommentForm'] = question_comment_form
+        context['ansCommentForm'] = answer_comment_form
+        context['form'] = form
+
+        return context
 
 
 
-def update(request, pk):
-    data = get_object_or_404(answer, id=pk)
+class QuestionCommentFormView(FormView):
+    form_class = QuesCommentForm
 
-    if request.method == 'POST':
-        form = answerForm(request.POST, instance=data)
-        if form.is_valid():
-            form.save()
-            related_question_pk = data.answerToTheQuestion.pk
-            return redirect('questionDetail', pk=related_question_pk)
-    
-    form = answerForm(instance=data)
-    return render(request, 'forms/answer_forms.html', {'form': form})
-    
+    def get_object(self):
+        pk = self.kwargs.get('pk')
+        return get_object_or_404(Questions, id=pk)
+    def post(self, request, **kwargs):
+        obj = self.get_object()
+        que_comment_form = self.form_class(request.POST)
+
+        if que_comment_form.is_valid():
+            comment = que_comment_form.save(commit=False)
+            comment.comment_question = obj
+            comment.comment_user = request.user
+            comment.save()
+            return self.get_success_response(comment)
+
+    def get_success_response(self, form):
+        response_data = {
+            'message': 'success',
+            'commentUser': form.comment_user.username,
+            'commentId': form.id,
+            'published_date': form.published_date.astimezone().strftime('%d %B %Y %H:%M'),
+        }
+        return JsonResponse(response_data)
 
 
-def comment_form(request, pk):
-    this_answer = get_object_or_404(answer, id=pk)
-    if request.method == "POST":
-        form = commentForm(request.POST)
+
+class AnswerCommentFormView(FormView):
+    form_class = commentForm
+
+    def get_object(self):
+        pk = self.kwargs.get('pk')
+        return get_object_or_404(Answers, id=pk)
+    def post(self, request, *args, **kwargs):
+        this_answer = self.get_object()
+        form = self.form_class(request.POST)
+
         if form.is_valid():
             item = form.save(commit=False)
             item.comment_answer = this_answer
             item.comments_user = request.user
             item.save()
-            return redirect('questionDetail', pk=this_answer.answerToTheQuestion.id)
-    form = commentForm()
-    return render(request, 'forms/comment_form.html', {'form': form})
+
+            return self.get_success_response(item)
+
+    def get_success_response(self, item):
+        response_data = {
+            'message': 'success', 'formValue': item.comment, 'user': item.comments_user.username,
+            'PubDate': item.published_date.astimezone().strftime('%d %B %Y %H:%M'),
+            'commentId': item.id
+        }
+        return JsonResponse(response_data)
 
 
 
-def comment_details(request, pk):
-    answer_details = get_object_or_404(answer, id=pk)
-    comments = comment.objects.filter(comment_answer=answer_details).order_by('-published_date')
-    comment_count = comments.count()
-    return render(request, 'pages/comments.html', {'answer': answer_details, 'comments': comments, 'comment_count' : comment_count})
+class AskedQuestionFormView(FormView):
+    template_name = 'forms/forms.html'
+    form_class = questionForm
+    success_url = '/'
+
+    def form_valid(self, form):
+        item = form.save(commit=False)
+        item.user = self.request.user
+        item.save()
+        form.save_m2m()
+        return super().form_valid(item)
 
 
 
-def tags(request):
-    data = {}
-    data['tags'] = Tags.objects.all()
+class AnswerQuestionFormView(FormView):
+    form_class = answerForm
+    def get_success_url(self):
+        pk = self.kwargs['pk']
+        return reverse_lazy("question_detail", kwargs={"pk": pk})
+    def get_object(self):
+        pk = self.kwargs.get('pk')
+        return get_object_or_404(Questions, id=pk)
+    def form_valid(self, form):
+        super().form_valid(form)
+        item = form.save(commit=False)
+        item.user = self.request.user
+        item.answer_to_the_question = self.get_object()
+        item.save()
 
-    if request.method == "POST":
-        search = request.POST.get('Search')
-        data['tags'] = Tags.objects.filter(name__icontains=search)
-        if not data['tags']:
-            data['error'] = 'Aramaya göre içerik bulunmamaktadır'
-        
-    return render(request, 'pages/tags.html', data)
-
-
-
-def tagDetailView(request, name):
-    data = {}
-
-    queryset = question.objects.filter(tags__name=name)
-
-    tags_of_question = Tags.objects.filter(name=name)
-    data['tags_name'] = tags_of_question.first().name if tags_of_question.exists() else None
-    data['tags_content'] = tags_of_question.first().content if tags_of_question.exists() else None
-
-    data['queryset'] = queryset
-    data['queryset_count'] = queryset.count()
-    return render(request, 'pages/tags.html', data)
+        return super().form_valid(item)
 
 
 
-def ques_comment_form(request, pk):
-    obje = get_object_or_404(question, id=pk)
-    if request.method == 'POST':
-        form = QuesCommentForm(request.POST)
-        if form.is_valid():
-            comment = form.save(commit=False)
-            comment.commentQues = obje
-            comment.commentUser = request.user
-            comment.save()
-            return redirect('questionDetail', pk=pk)
-    form = QuesCommentForm()
-    return render(request, 'pages/quesCommentForm.html', {'form' :form})
+class TagView(ListView):
+    template_name = "pages/tags.html"
+    model = Tags
+    context_object_name = "tags"
+    paginate_by = 8
+
+    def get_queryset(self):
+        queryset = Tags.objects.annotate(question_count=Count('questions')).order_by('-question_count')
+        return queryset
+
+    def get(self, request, *args, **kwargs):
+        search = request.GET.get('Search')
+        if search:
+            tags = Tags.objects.filter(name__icontains=search)
+            if not tags.exists():
+                return render(request, self.template_name, {'error': 'Aramaya göre içerik bulunmamaktadır'})
+            return render(request, self.template_name, {'tags': tags})
+
+        name = kwargs.get("name")
+        if name:
+            tag = get_object_or_404(Tags, name=name)
+            queryset = Questions.objects.filter(tags__name=tag.name).annotate(ann_answer=Count('answers')).values('id', 'ann_answer', 'title', 'view', 'published_date', 'user__username')
+
+            context = {
+                'queryset': queryset,
+                'queryset_count': queryset.count(),
+                'tags_name': tag.name,
+                'tags_content': tag.content,
+            }
+            return render(request, self.template_name, context)
+        return super().get(request, *args, **kwargs)
 
 
 
-def increase(request, question_id):
-    to_increase = get_object_or_404(question, id=question_id)
-    to_increase.user_vote(request.user, 1)
-
-    return JsonResponse({"increase_vote": to_increase.votes})
 
 
+class QuestionVoteAjaxView(View):
+    def get(self, request, question_id, **kwargs):
+        vote_type = request.GET.get('vote_type')
+        data = {}
+        question = get_object_or_404(Questions, id=question_id)
+        value = 1 if vote_type == 'increase' else -1
+        question.userVote(request.user, value)
+        data["vote_count"] = question.vote
 
-def decrease(request, question_id):
-    to_decrease = get_object_or_404(question, id=question_id)
-    to_decrease.user_vote(request.user, -1)
-
-    return JsonResponse({"decrease_vote": to_decrease.votes})
-
-
-
-def answer_vote_increase(request, answer_id):
-    to_increase = get_object_or_404(answer, id=answer_id)
-    to_increase.user_answer_vote(request.user, 1)
-
-    return JsonResponse({"increase_vote": to_increase.votes})
+        return JsonResponse(data)
 
 
 
-def answer_vote_decrease(request, answer_id):
-    to_decrease = get_object_or_404(answer, id=answer_id)
-    to_decrease.user_answer_vote(request.user, -1)
+class AnswerVoteAjaxView(View):
+    def get(self, request, answer_id, **kwargs):
+        vote_type = request.GET.get('vote_type')
+        data = {}
+        question = get_object_or_404(Answers, id=answer_id)
+        value = 1 if vote_type == 'increase' else -1
+        question.userAnswerVote(request.user, value)
+        data["vote_count"] = question.vote
 
-    return JsonResponse({"decrease_vote": to_decrease.votes})
-
-
-
-def que_delete(request, pk):
-    que = question.objects.get(id=pk)
-    que.delete()
-    return redirect('index')
-
-
-def ans_delete(request, pk):
-    ans = answer.objects.get(id=pk)
-    ans.delete()
-    return redirect("questionDetail", pk=ans.answerToTheQuestion.id )
-
-
-def queCommentDelete(request, pk):
-    que_comment = QuesComment.objects.get(id=pk)
-    que_comment.delete()
-    return redirect('questionDetail', pk=que_comment.commentQues.id)
-
-
-def ansCommentDelete(request, pk):
-    ans_comment = comment.objects.get(id=pk)
-    ans_comment.delete()
-    return redirect('questionDetail', pk=ans_comment.comment_answer.answerToTheQuestion.id)
+        return JsonResponse(data)
 
 
 
-def timeline(request, pk):
-    question_timeline = question.objects.get(id=pk)
 
-    answer_timeline = answer.objects.filter(answerToTheQuestion=question_timeline.id)
-    comment_timeline = QuesComment.objects.filter(commentQues=question_timeline.id)
-    vote_timeline = Vote.objects.filter(question=question_timeline)
-
-    activity_count = sum([answer_timeline.count(), comment_timeline.count(), vote_timeline.count()])
-
-    timeline = []
-
-    for ans in answer_timeline:
-        timeline.append({
-            "date": ans.published_date,
-            "activity_type": "Cevap",
-            "user": ans.user,
-            "comment": '',
-        })
-
-    for cmnt in comment_timeline:
-        timeline.append({
-            "date": cmnt.PubDate,
-            "activity_type": "Yorum",
-            "user": cmnt.commentUser,
-            "comment": cmnt.comment,
-        })
-
-    for vote in vote_timeline:
-        timeline.append({
-            "date": vote.pubDate,
-            "activity_type": "Oy",
-            "user": vote.user,
-            "comment": '',
-        })
-
-    timeline = sorted(timeline, key=lambda x: x['date'], reverse=True)
-
-    data = {
-        "question_timeline": question_timeline,
-        "timeline": timeline,
-        "activity_count": activity_count,
+def DeleteItemView(request, item_type, pk):
+    models = {
+        'question': Questions,
+        'answer': Answers,
+        'question_comment': QuestionComments,
+        'answer_comment': AnswerComments,
     }
-    return render(request, 'pages/timeline.html', data)
+
+    model = models.get(item_type)
+    item = get_object_or_404(model, id=pk)
+    item.delete()
+
+    if item_type in ['question', 'answer']:
+        redirect_url = reverse('index')
+        if item_type == 'answer':
+            redirect_url = reverse('question_detail', kwargs={'pk': item.answer_to_the_question.id})
+        return redirect(redirect_url)
+    else:
+        return JsonResponse({'message': 'success'})
 
 
 
-def user_profile(request, username):
-    user_profile = UserProfile.objects.get(user__username=username)
-    answered_questions_count = answer.objects.filter(user__username=username).count()
-    user_question = question.objects.filter(user__username=username).order_by('-votes', '-view')
+class TimelineView(ListView):
+    model = Questions
+    template_name = "pages/timeline.html"
+    context_object_name = "question_timeline"
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        question_timeline = self.get_queryset().get(id=self.kwargs.get("pk"))
 
-    tags = Tags.objects.filter(question__in=user_question)
-    used_tags =  tags.annotate(que_count=Count('question')).order_by('-que_count')
+        answer_timeline = Answers.objects.filter(answer_to_the_question=question_timeline).select_related('answer_to_the_question', 'user')
+        comment_timeline = QuestionComments.objects.filter(comment_question=question_timeline).select_related('comment_question', 'comment_user')
+        vote_timeline = Vote.objects.filter(question_vote=question_timeline).select_related('question_vote', 'user')
 
-    data = {
-        "user_profile": user_profile, 
-        "answered_questions_count": answered_questions_count,
-        "asked_questions_count": user_question.count(),
-        'user_question': user_question,
-        "order_tags": used_tags,
-    }
-    return render(request, "pages/user-profile.html", data)
+        timeline = []
+        for ans in answer_timeline:
+            timeline.append({
+                "date": ans.published_date,
+                "activity_type": "Cevap",
+                "user": ans.user,
+                "comment": '',
+            })
+        for cmnt in comment_timeline:
+            timeline.append({
+                "date": cmnt.published_date,
+                "activity_type": "Yorum",
+                "user": cmnt.comment_user,
+                "comment": cmnt.comment,
+            })
+        for vote in vote_timeline:
+            timeline.append({
+                "date": vote.published_date,
+                "activity_type": "Oy",
+                "user": vote.user,
+                "comment": '',
+            })
 
+        timeline = sorted(timeline, key=lambda x: x['date'], reverse=True)
 
+        context["timeline"] = timeline
+        context["question_timeline"] = question_timeline
+        context["activity_count"] = sum([answer_timeline.count(), comment_timeline.count(), vote_timeline.count()])
 
-
-
-def user_profile_activity(request, username):
-    user_profile = UserProfile.objects.get(user__username=username)
-    user_question = question.objects.filter(user__username=username).order_by('-votes')
-    user_answer = answer.objects.filter(user__username=username).order_by('-votes')
-
-    tags = Tags.objects.filter(question__in=user_question)
-    used_tags = tags.annotate(que_count=Count('question')).order_by('-que_count')
-
-    que_votes = sum(user_question.values_list('votes', flat=True))
-    ans_votes = sum(user_answer.values_list('votes', flat=True))
-    all_votes = que_votes + ans_votes
-
-    data = {
-        "user_profile": user_profile, 
-        "user_question": user_question, 
-        "user_answer": user_answer,
-        "order_tags": used_tags,
-        "all_votes": all_votes,
-        "que_votes": que_votes,
-        "ans_votes": ans_votes,
-    }
-    return render(request, "pages/user_profile_activity.html", data)
-
-
+        return context
 
 
 
-def user_profile_answers(request, username):
-    user_profile = UserProfile.objects.get(user__username=username)
-    user_answer = answer.objects.filter(user__username=username).order_by('-votes')
+class UsersProfileView(ListView):
+    model = UserProfile
+    template_name = "pages/user-profile.html"
+    context_object_name = "user_profile"
 
-    data = {
-        "user_profile": user_profile, 
-        "user_answer": user_answer,
-        "answered_questions_count": user_answer.count(),
-    }
-    return render(request, "pages/user_profile_answers.html", data)
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        username = self.kwargs.get("username")
+        user_profile = self.get_queryset().get(user__username=username)
 
+        answered_questions_count = Answers.objects.filter(user__username=username).select_related('user').count()
+        user_question = Questions.objects.filter(user__username=username).select_related('user').order_by('-vote', '-view')
+        tags = Tags.objects.filter(questions__in=user_question)
+        used_tags = tags.annotate(question_count=Count('questions')).order_by('-question_count')
 
+        context["user_profile"] = user_profile
+        context["answered_questions_count"] = answered_questions_count
+        context["asked_questions_count"] = user_question.count()
+        context["user_question"] = user_question
+        context["order_tags"] = used_tags
 
-def user_profile_questions(request, username):
-    user_profile = UserProfile.objects.get(user__username=username)
-    user_question = question.objects.filter(user__username=username).order_by('-votes')
-
-    data = {
-        "user_profile": user_profile, 
-        "asked_questions": user_question,
-        "asked_questions_count": user_question.count(),
-    }
-    return render(request, "pages/user_profile_question.html", data)
-
+        return context
 
 
 
-def user_profile_tags(request, username):
-    user_profile = UserProfile.objects.get(user__username=username)
-    user_question = question.objects.filter(user__username=username)
-    
-    tags = Tags.objects.filter(question__in=user_question)
-    used_tags = tags.annotate(que_count=Count('question')).order_by('-que_count')
+class UsersProfileActivityView(ListView):
+    model = Questions
+    template_name = 'pages/user_profile_activity.html'
+    context_object_name = 'user_questions'
 
-    data = {
-        "user_profile": user_profile, 
-        "tag_count": used_tags.count(),
-        "order_tags": used_tags,
-    }
-    return render(request, "pages/user_profile_tags.html", data)
+    def get_queryset(self):
+        username = self.kwargs['username']
+        user_questions = Questions.objects.filter(user__username=username).select_related('user').order_by('-vote')
+        return user_questions
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        username = self.kwargs.get('username')
+        user_profile = UserProfile.objects.select_related('user').get(user__username=username)
+        user_answer = Answers.objects.filter(user__username=username).select_related('user').order_by('-vote')
+
+        tags = Tags.objects.filter(questions__in=self.get_queryset())
+        used_tags = tags.annotate(que_count=Count('questions')).order_by('-que_count')
+
+        que_votes = sum(context['user_questions'].values_list('vote', flat=True))
+        ans_votes = sum(user_answer.values_list('vote', flat=True))
+        all_votes = que_votes + ans_votes
+
+        context["user_question"] = self.get_queryset()
+        context["user_profile"] = user_profile
+        context["user_answer"] = user_answer
+        context["order_tags"] = used_tags
+        context["all_votes"] = all_votes
+        context["que_votes"] = que_votes
+        context["ans_votes"] = ans_votes
+
+        return context
+
+
+
+class UsersProfileAnswersView(ListView):
+    model = UserProfile
+    template_name = "pages/user_profile_answers.html"
+    context_object_name = "user_profile"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        username = self.kwargs.get("username")
+        user_profile = self.get_queryset().select_related('user').get(user__username=username)
+        user_answer = Answers.objects.filter(user__username=username).select_related('answer_to_the_question').order_by('-vote').annotate(answered_questions_count=Count('id'))
+
+        context["user_profile"] = user_profile
+        context["user_answer"] = user_answer
+        context["answered_questions_count"] = user_answer.count()
+
+        return context
+
+
+
+class UsersProfileQuestionsView(ListView):
+    model = UserProfile
+    template_name = "pages/user_profile_question.html"
+    context_object_name = "user_profile"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        username = self.kwargs.get("username")
+        user_profile = UserProfile.objects.select_related('user').get(user__username=username)
+        user_question = Questions.objects.filter(user__username=username).select_related('user').prefetch_related('tags').order_by('-vote').annotate(ans_count=Count('answers'))
+
+        context["user_profile"] = user_profile
+        context["asked_questions"] = user_question
+        context["asked_questions_count"] = user_question.count()
+
+        return context
+
+
+
+class UsersProfileTagsView(ListView):
+    model = UserProfile
+    template_name = "pages/user_profile_tags.html"
+    context_object_name = "user_profile"
+
+    def get_context_data(self, *, object_list=None, **kwargs):
+        context = super().get_context_data(**kwargs)
+        username = self.kwargs.get("username")
+
+        user_profile = UserProfile.objects.get(user__username=username)
+        user_question = Questions.objects.filter(user__username=username).select_related('user').prefetch_related('tags')
+        tags = Tags.objects.filter(questions__in=user_question)
+        used_tags = tags.annotate(que_count=Count('questions')).order_by('-que_count')
+
+        context["user_profile"] = user_profile
+        context["tag_count"] = used_tags.count()
+        context["order_tags"] = used_tags
+
+        return context
+
+
+
+
+class GetReportView(View):
+    template_name = 'pages/get_report.html'
+    http_method_names = ['get', 'post']
+
+    def get(self, request):
+        return render(request, self.template_name)
+
+    def post(self, request):
+        if request.method == 'POST':
+            selected_date = request.POST.get('selected_date')
+
+            if selected_date:
+                que = Questions.objects.filter(user=request.user, published_date__date=selected_date).select_related('user')
+                selected_datetime = datetime.strptime(selected_date, '%Y-%m-%d')
+                GenerateReport.delay(user_id=request.user.id, selected_date=selected_datetime)
+                if not que.exists():
+                    messages.error(request, f"{selected_datetime.strftime('%d %B %Y')} tarihine ait soru bulunamadı !")
+                else:
+                    messages.success(request, f"{selected_datetime.strftime('%d %B %Y')} tarihine ait sorularınız e-posta adresinize gönderilmiştir.")
+            else:
+                GenerateReport.delay(user_id=request.user.id)
+                messages.success(request, f"Sorularınız e-posta adresinize gönderilmiştir.")
+
+        return render(request, self.template_name)

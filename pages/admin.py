@@ -1,18 +1,18 @@
 from django.contrib import admin
-from .models import Tags, answer, question, saved, comment, QuesComment, Vote, answerVote
+from .models import Tags, Answers, Questions, Save, AnswerComments, QuestionComments, Vote, AnswerVote
 
 
-class questionAdmin(admin.ModelAdmin):
+class QuestionsModelAdmin(admin.ModelAdmin):
     list_display = ('pk', 'title', 'published_date')
     list_display_links = ('pk', 'title', 'published_date',)
 
 
 
-admin.site.register(question, questionAdmin)
+admin.site.register(Questions, QuestionsModelAdmin)
 admin.site.register(Vote)
-admin.site.register(answer)
-admin.site.register(saved)
-admin.site.register(comment)
+admin.site.register(Answers)
+admin.site.register(Save)
+admin.site.register(AnswerComments)
 admin.site.register(Tags)
-admin.site.register(QuesComment)
-admin.site.register(answerVote)
+admin.site.register(QuestionComments)
+admin.site.register(AnswerVote)

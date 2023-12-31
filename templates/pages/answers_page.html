@@ -22,7 +22,6 @@
         text-decoration: none;
         color: black;
         border-radius: 10px;
-        position: absolute;
         top: 75px;
         right: 26rem;
         width: 150px;
@@ -133,9 +132,9 @@
         <div style="border: 1px solid #ccc; width: 760px; height: 650px; position: absolute; top: 22rem; left: 47rem; border-radius: 10px; overflow: auto;">
             {% for ans in answered_questions %}
             <div style="border-bottom: 1px solid #ccc; padding: 25px 20px;">
-                <div style="position: relative; left: 0px;">{{ ans.votes }} oylar</div>
-                <a href="{% url 'questionDetail' ans.answerToTheQuestion.id %}" style="text-decoration: none; font-size: 20px;">{{ ans.answerToTheQuestion.title }}</a>
-                {% for tag in ans.answerToTheQuestion.tags.all %}
+                <div style="position: relative; left: 0;">{{ ans.vote }} oylar</div>
+                <a href="{% url 'question_detail' ans.answer_to_the_question.id %}" style="text-decoration: none; font-size: 20px;">{{ ans.answer_to_the_question.title }}</a>
+                {% for tag in ans.answer_to_the_question.tags.all %}
                     <div class="tag" style="position: relative; top: 10px;">
                         <a style="text-decoration: none;" href="{% url 'tag_detail' tag %}">{{ tag }}</a>
                     </div>

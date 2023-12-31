@@ -22,7 +22,6 @@
         text-decoration: none;
         color: black;
         border-radius: 10px;
-        position: absolute;
         top: 75px;
         right: 26rem;
         width: 150px;
@@ -96,6 +95,7 @@
         position: relative;
         left: 1.5rem;
         top: 0.7rem;
+        margin: 5px 10px 0 0;
     }
 
     
@@ -117,49 +117,69 @@
     
 
 
-        {% if mySaved|length == 0 %}
-            <div class="alert alert-danger" style="position: relative; top: 20rem; left: 23rem; width: 50rem; text-align: center;">Kayıtlı öğeniz bulunamadı !</div>
-        {% endif %}
+    {% if mySaved|length == 0 %}
+        <div class="alert alert-danger" style="position: relative; top: 20rem; left: 23rem; width: 50rem; text-align: center;">Kayıtlı öğeniz bulunamadı !</div>
+    {% endif %}
 
-        <div class="row" style="margin-top: 100px; margin-right: 50px;">
-            <div class="col-12" style="position: relative; top: 15rem; left: 23rem; width: 53rem;">
-                {% if mySaved %}<p style="font-size: 17px; font-weight: 500;">{{saved_count}} Kayıtlı öğe</p>{% endif %}
-                {% for item in mySaved %}
-                <div class="card" style="border-radius: 0px;">
+    <div class="row" style="margin-top: 100px; margin-right: 50px;">
+        <div class="col-12" style="position: relative; top: 15rem; left: 23rem; width: 53rem;">
+            {% if mySaved %}<p style="font-size: 17px; font-weight: 500;">{{saved_count}} Kayıtlı öğe</p>{% endif %}
+            {% for item in mySaved %}
+                <div class="card" style="border-radius: 0;">
                     <div style="display: flex; padding: 10px 0 0 30px;">
-                        <p class="card-title" style="margin-right: 20px;">{{ item.que.votes }} oylar</p>
+                        <p class="card-title" style="margin-right: 20px;">{{ item.questions.vote }} oylar</p>
                         <p class="card-title" style="margin-right: 20px;">{{ item.answer_count }} cevap</p>
-                        <p class="card-title" style="margin-right: 20px;"> {{ item.que.view }} görüntüleme</p>
+                        <p class="card-title" style="margin-right: 20px;"> {{ item.questions.view }} görüntüleme</p>
                         <div class="dropdown" style="margin-left: 26rem;">
                             <button type="button" style="position: relative; left: 5rem;" class="btn btn-light-primary btn-icon btn-sm" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                                 <i class="fa-solid fa-ellipsis-vertical"></i>
                             </button>
                             <ul class="dropdown-menu">
-                                <li><a class="dropdown-item" href="{% url 'is_saved' pk=item.que.id %}">Kaydetmeyi ipytal et</a></li>
+                                <li><a class="dropdown-item" href="{% url 'delete_saved' pk=item.questions.id %}">Kaydetmeyi ipytal et</a></li>
                             </ul>
                         </div>
-                    </div> 
-                    <a href="{% url 'questionDetail' item.que.pk %}" class="card-content" style="position: relative; left: 2rem; text-decoration: none; font-size: 20px;">{{ item.que.title }}</a>
+                    </div>
+                    <a href="{% url 'question_detail' item.questions.pk %}" class="card-content" style="position: relative; left: 2rem; text-decoration: none; font-size: 20px;">{{ item.questions.title }}</a>
                     <div style="display: flex;">
-                        {% for tag in item.que.tags.all %}
+                        {% for tag in item.questions.tags.all %}
                             <a href="{% url 'tag_detail' tag.name %}" class="tag">{{ tag.name }}</a>
                         {% endfor %}
                     </div>
                     <div style="display: flex; justify-content: end; position: relative; right: 1rem;">
-                        <p>{{ item.que.user }}</p>
-                        <p style="margin-left: 20px;">{{ item.que.published_date }} tarihinde soruldu</p>
+                        <p>{{ item.questions.user }}</p>
+                        <p style="margin-left: 20px;">{{ item.questions.published_date }} tarihinde soruldu</p>
                     </div>
                 </div>
-                {% endfor %}  
+            {% endfor %}
+            <div style="margin-top: 100px">
+                <nav aria-label="Page navigation example">
+                    <ul class="pagination">
+                        {% if mySaved.has_previous %}
+                            <li class="page-item"><a class="page-link" href="?page=1">&laquo; ilk</a></li>
+                        {% endif %}
+
+
+                        {% for page_number in mySaved.paginator.page_range %}
+                            {% if mySaved.number == page_number %}
+                                <li style="{% if mySaved.paginator.num_pages == 1 %}display: none;{% endif %}" class="page-item active"><a class="page-link" href="?page={{ page_number }}">{{ page_number }}</a></li>
+                            {% else %}
+                                <li class="page-item"><a class="page-link" href="?page={{ page_number }}">{{ page_number }}</a></li>
+                            {% endif %}
+                        {% endfor %}
+
+
+                        {% if mySaved.has_next %}
+                            <li class="page-item"><a class="page-link" href="?page={{ mySaved.paginator.num_pages }}">son &raquo;</a></li>
+                        {% endif %}
+                    </ul>
+                </nav>
             </div>
         </div>
     </div>
+</div>
 
 
 
 
     <div style="position: absolute; top: 73rem; left: 60rem; border: 1px solid white; width: 10px;"></div>
-</div> 
-
-
 {% endblock %}

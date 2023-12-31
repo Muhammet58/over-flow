@@ -13,4 +13,5 @@ urlpatterns = [
     path('editprofile/', views.edit_profile, name='edit_profile'),
     path('saved/', views.saved_page, name='saved_page'),
     path('is-saved/<int:pk>', views.is_saved, name='is_saved'),
+    path('delete_saved/<int:pk>', views.deleteSaved, name='delete_saved'),
 ]

@@ -45,7 +45,7 @@
         transition: .5s ease;
         text-decoration: none;
     }
-    
+
     .stil:hover {
         color: blue;
     }
@@ -53,12 +53,13 @@
     .border-color {
         border: 1px solid black;
         border-radius: 50%;
-        width: 35px; 
-        height: 35px; 
-        display: flex; 
-        align-items: center; 
+        width: 35px;
+        height: 35px;
+        display: flex;
+        align-items: center;
         justify-content: center;
     }
+
     .border-color:hover {
         background-color: #f7d99e;
     }
@@ -99,27 +100,25 @@
 
         <div class="card_question" style="display: flex; align-items: center;">
             <p>{{ item.title }}</p>
-            <a href="{% url 'formPage' %}" class="btn btn-primary" style="position: absolute; left: 50rem; width: 6rem;">Soru sor</a>
+            <a href="{% url 'form_page' %}" class="btn btn-primary" style="position: absolute; left: 50rem; width: 6rem;">Soru sor</a>
         </div>
 
         <div style="position: absolute; top: 9rem; left: 31rem; font-size: 15px; border-bottom: 1px solid rgb(190, 190, 190); margin-right: 7rem; width: 47%; padding-bottom: 15px;">
-            Diye sordu <strong>{{ item.published_date }}</strong> tarihinde
-            &nbsp;&nbsp;&nbsp;<strong>{{ item.view }}</strong> kez görüntülendi
+            Diye sordu <strong>{{ item.published_date }}</strong> tarihinde&nbsp;&nbsp;&nbsp;<strong>{{ item.view }}</strong> kez görüntülendi
         </div>
 
         <div style="position: absolute; top: 13rem; left: 31.7rem; font-size: larger; text-align: center;">
-            <a style="text-decoration: none; color: black;" href="javascript:void(0)" onclick="toggleIncrease('{{item.id}}')"><i class="fa-solid fa-caret-up border-color"></i></a><br>
-            <div style="position: absolute; top: 3rem; left: 0.7rem; font-size: 23px; font-weight: 600;"><p id="voteText{{item.id}}">{{ item.votes }}</p></div><br>
-            <a style="text-decoration: none; color: black;" href="javascript:void(0)" onclick="toggleDecrease('{{item.id}}')"><i class="fa-solid fa-caret-down border-color"></i></a><br>
+            <a style="text-decoration: none; color: black;" onclick="toggleQuestionVote('{{item.id}}', 'increase')"> <i class="fa-solid fa-caret-up border-color"></i></a> <br>
+            <div style="position: absolute; top: 3rem; left: 0.7rem; font-size: 23px; font-weight: 600;"><p id="voteText{{item.id}}">{{ item.vote }}</p></div> <br>
+            <a style="text-decoration: none; color: black;"  onclick="toggleQuestionVote('{{item.id}}', 'decrease')"><i class="fa-solid fa-caret-down border-color"></i></a> <br>
         </div>
 
         <div style="position: absolute; top: 22rem; left: 32.2rem;">
-            <a href="{% url 'is_saved' pk=item.id %}"><i style="color: gray; font-size: 25px;" onclick="toggleSaved(this)" 
-            class="fas fa-bookmark {% if item.id in saved_que %} text-danger {% endif %}" type="button"></i></a>
+            <a href="{% url 'is_saved' pk=item.id %}"><i style="color: gray; font-size: 25px;" onclick="toggleSaved(this)" class="fas fa-bookmark {% if item.id in saved_que %} text-danger {% endif %}" type="button"></i></a>
         </div>
 
         <div style="position: absolute; top: 25rem; left: 32.3rem; font-size: 17px; opacity: 0.8;">
-            <a class="history" href="{% url 'timeline' item.id %}" ><i class="fa-solid fa-clock-rotate-left"></i></a>
+            <a class="history" href="{% url 'timeline' item.id %}"><i class="fa-solid fa-clock-rotate-left"></i></a>
         </div>
 
         <div style="position: absolute; left: 36rem; top: 12rem; width: 50%; word-wrap: break-word; overflow: auto; height: 210px;">
@@ -127,100 +126,168 @@
         </div>
 
         <div style="position: relative; top: 430px; left: 180px;">
-            {% for tag in item.tags.all %}
+            {% for tag in tags %}
                 <a href="{% url 'tag_detail' tag.name %}" class="tag" style="display: inline-block; margin-right: 5px;">{{ tag.name }}</a>
             {% endfor %}
         </div>
 
+
+
         <div style="position: absolute; top: 10.5rem; left: 98rem; font-size: 20px;">
+
             <p>Bağlantılı</p>
             {% if connected|length == 0 %}
-                <div style="font-size: 15px; background: lightgray; border-radius: 5px; padding: 0px 10px; width: 250px;">Bağlantılı soru bulunmamaktadır !</div>
+                <div style="font-size: 15px; background: lightgray; border-radius: 5px; padding: 0 10px; width: 250px;">
+                    Bağlantılı soru bulunmamaktadır !
+                </div>
             {% endif %}
+
             {% for connect in connected %}
-                <div style="font-size: 15px; margin-bottom: 5px;"> <span class="{% if connect.votes <= 0 %} gray {% endif %} green" style="border: 1px solid #a8a8a8; padding: 0px 15px; margin-right: 15px; border-radius: 5px;">{{connect.votes}}</span> <a href="{% url 'questionDetail' connect.id %}" style="text-decoration: none;">{{connect.title}}</a><br> </div>
+                <div style="font-size: 15px; margin-bottom: 5px;"> <span class="{% if connect.vote <= 0 %} gray {% endif %} green" style="border: 1px solid #a8a8a8; padding: 0 15px; margin-right: 15px; border-radius: 5px;">{{connect.vote}}</span>
+                    <a href="{% url 'question_detail' connect.id %}" style="text-decoration: none;">{{connect.title}}</a><br>
+                </div>
             {% endfor %}
 
             <p style="position: relative; top: 5rem;">İlgili</p>
+            {% if related|length == 0 %}
+                <div style="font-size: 15px; background: lightgray; border-radius: 5px; padding: 0 10px; width: 250px; margin-top: 6rem;">
+                    İlgili soru bulunmamaktadır !
+                </div>
+            {% endif %}
+
             {% for relate in related %}
-                <div style="font-size: 15px; margin-bottom: 10px; position: relative; top: 75px; display: flex;"> <span  class="{% if relate.votes <= 0 %} gray {% endif %} green" style="border: 1px solid #a8a8a8; padding: 0px 15px; margin-right: 15px; border-radius: 5px; height: 25px;">{{relate.votes}}</span> <a href="{% url 'questionDetail' relate.id %}" style="text-decoration: none; word-wrap: break-word; width: 150px;">{{relate.title}}</a><br> </div>
+                <div style="font-size: 15px; margin-bottom: 10px; position: relative; top: 75px; display: flex;">
+                    <span class="{% if relate.vote <= 0 %} gray {% endif %} green" style="border: 1px solid #a8a8a8; padding: 0 15px; margin-right: 15px; border-radius: 5px; height: 25px;">{{relate.vote}}</span>
+                    <a href="{% url 'question_detail' relate.id %}" style="text-decoration: none; word-wrap: break-word; width: 150px;">{{relate.title}}</a><br>
+                </div>
             {% endfor %}
         </div>
 
-        <div class="col-12">
-            {% for comment in question_comments %}
-                <div style="width: 50rem; transform: translateX(12rem) translateY(30rem); border-top: 1px solid rgb(190, 190, 190); word-wrap: break-word; padding: 5px 20px 5px 20px;">
-                    <p>{{ comment.comment }} - {{ comment.commentUser }} &nbsp; <em style="opacity: 0.5;">{{ comment.PubDate }}</em>{% if comment.commentUser == request.user or request.user.is_superuser %}<a href="{% url 'question_comments_delete' comment.id %}" class="stil" style="float: right;">Sil</a>{% endif %}</p>
-                </div>
-            {% endfor %}
-            <a href="{% url 'quesCommentForm' item.id %}" class="stil" style="position: absolute; top: 27rem; left: 36rem; display: block; margin-top: 10px;"><p style="opacity: 0.8; font-size: large;">Yorum Ekle</a></p>
-            {% if item.user == request.user or request.user.is_superuser %}
-                <a href="{% url 'question_delete' item.id %}" class="stil" style="position: absolute; top: 27rem; left: 43rem; display: block; margin-top: 10px;"><p style="opacity: 0.8; font-size: large;">Sil</a></p>
-            {% endif %}
-            <span style="position: absolute; left: 76rem; top: 26rem;">{{ item.user.username }}<br>{{ item.published_date|naturaltime }}</span>
+
+        <div style="opacity: 0; transition: 0.1s ease;" id="cmnt_field">
+            <form action="{% url 'question_comment_form' item.id %}" method="post" id="commentForm">
+                {% csrf_token %}
+                {{ queCommentForm.comment }}
+                <a  type="submit" role="button" class="btn btn-primary" style="position: absolute; top: 36.5rem; right: 32.5rem;" onclick="questionCommentAdd('{{item.id}}')">gönder</a>
+            </form>
         </div>
 
-        <div style="margin-top: 31rem; margin-left: 7rem;">
-            {% if answer|length != 0 %}
-            <div style="font-size: 25px;">
-                {{ answer_count }} yanıt 
-            </div>
-            {% endif %}
-            {% for item in answer %}
-                <div style="width: 800px; margin-top: 80px; {% if forloop.first %} margin-top: 20px; {% endif %} border-top: 1px solid #ccc; padding: 10px;">
-                    <div style="font-size: larger; text-align: center; width: 2.5rem;">
-                        <a style="text-decoration: none; color: black;" href="javascript:void(0)" onclick="toggleAnswerVoteIncrease('{{item.id}}')"><i class="fa-solid fa-caret-up border-color"></i></a><br>
-                        <div style="font-size: 23px; font-weight: 600; float: left;"><p id="answerVoteText{{item.id}}" style="margin: -1rem 0rem -1rem 0.7rem;">{{ item.votes }}</p></div><br>
-                        <a style="text-decoration: none; color: black;" href="javascript:void(0)" onclick="toggleAnswerVoteDecrease('{{item.id}}')"><i class="fa-solid fa-caret-down border-color"></i></a><br>
-                    </div>
-                </div>
-                <div class="col-12" style="width: 90%; margin: -150px 0px 0px 70px;">
-                    <p style="position: absolute; top: 0; left: 10rem;">{{ item.answer|safe }}</p>
-                </div>
-                
-                <a href="{% url 'comment_form' item.id %}" class="stil" style="display: block; margin: 10rem 0px -48px 40px; opacity: 0.8; font-size: large; width: 6rem;">Yorum Ekle</a>
-                {% if item.user == request.user or request.user.is_superuser %}
-                    <a href="{% url 'answer_delete' item.id %}" class="stil" style="display: block; position: relative; top: 1.3rem; left: 10rem; opacity: 0.8; font-size: large; width: 1.5rem;">Sil</a>
-                {% endif %}
-                <span style="position: relative; left: 15rem; top: -1rem;">{{ item.user.username }}<br>{{ item.published_date|naturaltime }}</span>
-                {% for comment in item.comment_set.all %}
-                    <div style="border-top: 1px solid #ccc; margin: 60px 0px -60px 50px; padding: 5px 20px 5px 20px; word-wrap: break-word; width: 50rem;">
-                        <p>{{ comment.comment }} - {{ comment.comments_user }} &nbsp; <em style="opacity: 0.5;">{{ comment.published_date }}</em>{% if comment.commentUser == request.user or request.user.is_superuser %}<a href="{% url 'answer_comments_delete' comment.id %}" class="stil" style="float: right;">Sil</a>{% endif %}</p>
+
+
+        <div id="comments" style="transition: 0.3s ease; margin: auto;">
+            <div class="col-12" id="comments">
+                {% for comment in question_comments %}
+                    <div id="queComment{{ comment.id }}" style="width: 50rem; position: relative; top: 32rem; left: 12rem; border-top: 1px solid rgb(190, 190, 190); word-wrap: break-word; padding: 5px 20px 5px 20px;">
+                        <p>{{ comment.comment }} - {{ comment.comment_user }} &nbsp; <em style="opacity: 0.5;">{{ comment.published_date }}</em>{% if comment.comment_user == request.user or request.user.is_superuser %}<a class="stil" onclick="deleteComment('question_comment', '{{comment.id}}')" style="float: right; cursor: pointer;">Sil</a>{% endif %}</p>
                     </div>
                 {% endfor %}
-            {% endfor %}
-        </div>  
-        <div class="container">
-            <div class="row">
-                <div class="col">
-                    <div style="margin-top: 70px; margin-left: 7rem;">
-                        <form action="{% url 'answer_question' item.id %}" method="post">
-                            {% csrf_token %}
-                            
-                            <p><label style="width: 800px;" for="{{ form.answer.id_for_label }}">Cevabınız :</label></p>
-                            <p>{{ form.answer }}</p>
-                            {{ form.media }}
 
-                            <div>
-                                <button type="submit" class="btn btn-primary">Yanıtınızı Gönderin</button>
+                <a onclick="displayChange()" id="cmnt_button" class="stil" style="position: absolute; top: 28rem; left: 36rem;"><p style="opacity: 0.8; font-size: large; cursor: pointer;">Yorum Ekle</p></a>
+
+                {% if item.user == request.user or request.user.is_superuser %}
+                    <a href="{% url 'delete_item' item_type='question' pk=item.id %}" class="stil" style="position: absolute; top: 28rem; left: 44rem;"><p style="opacity: 0.8; font-size: large;">Sil</p></a>
+                {% endif %}
+
+                <span style="position: absolute; left: 80rem; top: 27rem;">{{ item.user.username }}<br>{{ item.published_date|naturaltime }}</span>
+            </div>
+
+            <div id="answer_section" style="position: absolute; z-index: -1;">
+                <div style="margin-top: 32rem; margin-left: 7rem;">
+
+                    {% if answer|length != 0 %}
+                        <div style="font-size: 25px;">{{ answer_count }} yanıt</div>
+                    {% endif %}
+
+                    {% for item in answer %}
+                        <div style="width: 800px; margin-top: 80px; {% if forloop.first %}margin-top: 20px;{% endif %} border-top: 1px solid #ccc; padding: 10px;">
+                            <div style="font-size: larger; text-align: center; width: 2.5rem;">
+                                <a style="text-decoration: none; color: black;"  onclick="toggleAnswerVote('{{item.id}}', 'increase')"><i class="fa-solid fa-caret-up border-color"></i></a><br>
+                                <div style="font-size: 23px; font-weight: 600; float: left;"><p id="answerVoteText{{item.id}}" style="margin: -1rem 0 -1rem 0.7rem;">{{ item.vote }}</p></div><br>
+                                <a style="text-decoration: none; color: black;"  onclick="toggleAnswerVote('{{item.id}}', 'decrease')"><i class="fa-solid fa-caret-down border-color"></i></a><br>
                             </div>
-                        </form>
-                    </div>
+                        </div>
+
+                        <div class="col-12" style="width: 90%; margin: -150px 0 0 70px;">
+                            <p style="position: absolute; top: 0; left: 10rem;">{{ item.answer|safe }}</p>
+                        </div>
+
+                        <a onclick="ansDisplayChange('{{item.id}}')" id="ans_cmnt_button" class="stil" style="display: block; margin: 10rem 0 -48px 40px;"> <p style="opacity: 0.8; font-size: large; width: 6rem; cursor: pointer;">Yorum Ekle</p></a>
+
+                        {% if item.user == request.user or request.user.is_superuser %}
+                            <a href="{% url 'delete_item' item_type='answer' pk=item.id %}" class="stil" style="display: block; position: relative; top: 0.3rem; left: 10rem; opacity: 0.8; font-size: large; width: 1.5rem;">Sil</a>
+                        {% endif %}
+
+                        <span style="position: relative; left: 45rem; top: -1rem;">{{ item.user.username }}<br>{{ item.published_date|naturaltime }}</span>
+
+                        <div style="display: none; transition: 0.1s ease;" id="ans_cmnt_field{{item.id}}">
+                            <form action="{% url 'comment_form' item.id %}" method="post" id="ans_comment_form{{item.id}}">
+                                {% csrf_token %}
+                                {{ ansCommentForm.comment }}
+                                <a type="submit" role="button" class="btn btn-primary" style="position: relative; top: -2.5rem; left: 48.5rem;" onclick="answerCommentAdd('{{item.id}}')">gönder</a>
+                            </form>
+                        </div>
+
+                        <div id="answer_comment_field{{item.id}}">
+                            {% for comment in answer_comments|dictsortreversed:"published_date" %}
+                                <div id="ansCommentField{{comment.id}}" style="border-top: 1px solid #ccc; margin: 60px 0 -60px 50px; padding: 5px 20px 5px 20px; word-wrap: break-word; width: 50rem;">
+                                    <p>{{ comment.comment }} - {{ comment.comments_user }} &nbsp; <em style="opacity: 0.5;">{{ comment.published_date }}</em>{% if comment.commentUser == request.user or request.user.is_superuser %}<a onclick="ansCommentDelete('answer_comment', '{{comment.id}}')" class="stil" style="float: right; cursor: pointer;">Sil</a>{% endif %}</p>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% endfor %}
+                </div>
+
+
+
+                <div style="position: absolute; left: 7rem; margin-top: 5rem;" id="answer_field">
+                    <form action="{% url 'answer_question' item.id %}" method="post">
+                        {% csrf_token %}
+                        <p><label style="width: 800px;" for="{{ form.answer.id_for_label }}">Cevabınız :</label></p>
+                        <p>{{ form.answer }}</p>
+                        {{ form.media }}
+                        <div>
+                            <button type="submit" class="btn btn-primary">Yanıtınızı Gönderin</button>
+                        </div>
+                    </form>
                 </div>
             </div>
-        </div>    
+        </div>
     </div>
 </div>
 
 
 {% block js_files %}
 <script>
-   function toggleSaved(icon) {
-   icon.classList.toggle("fas");
-   icon.classList.toggle("far");
-   icon.classList.toggle("text-danger");
-}
+    function toggleSaved(icon) {
+        icon.classList.toggle("fas");
+        icon.classList.toggle("far");
+        icon.classList.toggle("text-danger");
+    }
 
+    function displayChange() {
+        const cmntField = document.getElementById('cmnt_field');
+        const cmnt = document.getElementById('comments');
+
+        if (cmntField.style.opacity === '0') {
+            cmntField.style.opacity = '1'
+            cmnt.style.marginTop = '7rem'
+        }
+        else {
+            cmntField.style.opacity = '0'
+            cmnt.style.marginTop = '0'
+        }
+    }
+
+    function ansDisplayChange(item_id) {
+        const ansCmntField = document.getElementById('ans_cmnt_field' + item_id);
+
+        if (ansCmntField.style.display === 'none') {
+            ansCmntField.style.display = 'block'
+        } else {
+            ansCmntField.style.display = 'none'
+        }
+    }
+    
 </script>
 <script src="{% static 'ajax.js' %}"></script>
 {% endblock js_files %}

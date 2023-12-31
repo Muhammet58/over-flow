@@ -1,12 +1,13 @@
 from datetime import timezone
 from django.http import HttpResponseBadRequest
+from django.core.paginator import Paginator
 from django.shortcuts import get_object_or_404, redirect, render
 from .forms import registerForms, loginForm, profileForm
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate, logout
 from django.contrib.auth import login as auth_login
 from .models import UserProfile
-from pages.models import question, answer, Tags, saved
+from pages.models import Questions, Answers, Tags, Save
 from django .db.models import Count
 
 
@@ -102,15 +103,15 @@ def logout_view(request):
 
 
 def profile_page(request):
-    user_profile = UserProfile.objects.get(user=request.user)
-    asked_questions = user_profile.user_questions.all().order_by('-votes')
+    user_profile = UserProfile.objects.select_related('user').get(user=request.user)
+    asked_questions = user_profile.user_questions.all().order_by('-vote')
     answered_questions = user_profile.user_answers.all()
     used_tags = user_profile.user_tags.all()
 
 
-    user_qusetion = question.objects.filter(user=user_profile.user)
-    tags = Tags.objects.filter(question__in=user_qusetion)
-    order_tags = tags.annotate(que_count=Count('question')).order_by('-que_count')
+    user_question = Questions.objects.filter(user=user_profile.user)
+    tags = Tags.objects.filter(questions__in=user_question)
+    order_tags = tags.annotate(que_count=Count('questions')).order_by('-que_count')
 
     
     data = {
@@ -130,16 +131,16 @@ def profile_page(request):
 
 def activity(request):
     user_profile = UserProfile.objects.get(user=request.user)
-    asked_questions = user_profile.user_questions.all().order_by('-votes')
-    answered_questions = user_profile.user_answers.all().order_by('-votes')
+    asked_questions = user_profile.user_questions.all().order_by('-vote')
+    answered_questions = user_profile.user_answers.all().order_by('-vote')
 
-    user_qusetion = question.objects.filter(user=user_profile.user)
-    tags = Tags.objects.filter(question__in=user_qusetion)
-    order_tags = tags.annotate(que_count=Count('question')).order_by('-que_count')
+    user_qusetion = Questions.objects.filter(user=user_profile.user)
+    tags = Tags.objects.filter(questions__in=user_qusetion)
+    order_tags = tags.annotate(que_count=Count('questions')).order_by('-que_count')
 
 
-    que_votes = sum(asked_questions.values_list('votes', flat=True))
-    ans_votes = sum(answered_questions.values_list('votes', flat=True))
+    que_votes = sum(asked_questions.values_list('vote', flat=True))
+    ans_votes = sum(answered_questions.values_list('vote', flat=True))
     all_votes = que_votes + ans_votes
 
     
@@ -162,7 +163,7 @@ def activity(request):
     
 def answers_page(request):
     user_profile = UserProfile.objects.get(user=request.user)
-    answered_questions = user_profile.user_answers.all().order_by('-votes')
+    answered_questions = user_profile.user_answers.all().order_by('-vote')
 
     data = {
         'user_profile': user_profile,
@@ -177,9 +178,9 @@ def answers_page(request):
 
 def questions_page(request):
     user_profile = UserProfile.objects.get(user=request.user)
-    asked_questions = user_profile.user_questions.all().order_by('-votes')
+    asked_questions = user_profile.user_questions.all().order_by('-vote')
 
-    asked_questions = asked_questions.annotate(ans_count=Count('answer'))
+    asked_questions = asked_questions.annotate(ans_count=Count('answers'))
 
 
     data = {
@@ -196,9 +197,9 @@ def questions_page(request):
 def tags_page(request):
     user_profile = UserProfile.objects.get(user=request.user)
 
-    user_qusetion = question.objects.filter(user=user_profile.user)
-    tags = Tags.objects.filter(question__in=user_qusetion)
-    order_tags = tags.annotate(que_count=Count('question')).order_by('-que_count')
+    user_qusetion = Questions.objects.filter(user=user_profile.user)
+    tags = Tags.objects.filter(questions__in=user_qusetion)
+    order_tags = tags.annotate(que_count=Count('questions')).order_by('-que_count')
 
 
     data = {
@@ -245,14 +246,15 @@ def edit_profile(request):
 
 
 def saved_page(request):
-    user_profile = UserProfile.objects.get(user=request.user)
-    mySaved = saved.objects.filter(user=request.user.id).select_related('que')
-    mySaved_answer_count = mySaved.annotate(answer_count=Count('que__answer'))
+    mySaved = Save.objects.select_related('user', 'questions').filter(user=request.user.id).annotate(answer_count=Count('questions__answers'))
 
+    paginator = Paginator(mySaved, 5)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
 
     data = {
-        'user_profile': user_profile,
-        'mySaved': mySaved_answer_count,
+        'user_profile': UserProfile.objects.get(user=request.user),
+        'mySaved': page_obj,
         'saved_count': mySaved.count(),
     }
     return render(request, 'pages/profile_saved.html', data)
@@ -262,10 +264,15 @@ def saved_page(request):
 
 
 def is_saved(request, pk):
-    que = get_object_or_404(question, id=pk)
-    save, created = saved.objects.get_or_create(user=request.user, que=que)
+    question = get_object_or_404(Questions, id=pk)
+    save, created = Save.objects.get_or_create(user=request.user, questions=question)
 
     if not created:
         save.delete()
-        return redirect('saved_page')
-    return redirect('questionDetail', pk=pk)
+    return redirect('question_detail', pk=pk)
+
+
+def deleteSaved(request, pk):
+    saved_object = Save.objects.get(questions__id=pk)
+    saved_object.delete()
+    return redirect('saved_page')

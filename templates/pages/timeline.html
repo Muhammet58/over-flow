@@ -13,7 +13,7 @@
 
     .content-table {
         border-collapse: collapse;
-        margin: 25px 0px;
+        margin: 25px 0;
         min-width: 400px;
     }
 
@@ -68,15 +68,15 @@
     
     <p style="position: absolute; top: 12rem; left: 32rem; font-size: 18px; font-weight: 700;">{{activity_count}} etkinlik</p>
     <table class="content-table">
-      <tr>
-        <th>Tarih</th>
-        <th>İşlem</th>  
-        <th>Kullanıcı</th>
-        <th>Yorum</th>
+        <tr>
+            <th>Tarih</th>
+            <th>İşlem</th>  
+            <th>Kullanıcı</th>
+            <th>Yorum</th>
       </tr>
       {% if timeline|length == 0 %}
       <tr>
-        <div style="position: absolute; top: 17.7rem; left: 32rem; width: 60.91rem; text-align: center; color: black; font-weight: 500; border-radius: 0;" class="alert alert-dark">Herhangi bir işlem geçmişi bulunmamaktadır !</div>
+          <div style="position: absolute; top: 17.7rem; left: 32rem; width: 60.91rem; text-align: center; color: black; font-weight: 500; border-radius: 0;" class="alert alert-dark">Herhangi bir işlem geçmişi bulunmamaktadır !</div>
       </tr>
       {% endif %}
       {% for time in timeline %}
@@ -85,7 +85,7 @@
         <td><span class="{% if time.activity_type == 'Cevap' %} ans {% elif time.activity_type == 'Yorum' %} cmnt {% elif time.activity_type == 'Oy' %} vote {% endif %}">{{time.activity_type}}</span></td>
         <td> {{time.user}} </td>
         <td style="max-width: 150px; word-wrap: break-word; font-size: 13px;"> {{time.comment}} </td>
-      </tr>
+    </tr>
       {% endfor %}
     </table>
 </div>

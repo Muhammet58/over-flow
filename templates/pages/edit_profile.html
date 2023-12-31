@@ -25,7 +25,6 @@ integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="ano
         text-decoration: none;
         color: black;
         border-radius: 10px;
-        position: absolute;
         top: 75px;
         right: 26rem;
         width: 150px;
@@ -88,11 +87,7 @@ integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="ano
     .profile_button:hover {
         background-color: lightgray;
     }
-
-
-    .cke_reset {
-        width: 108%;
-    }
+    
 
 
 
@@ -120,7 +115,7 @@ integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="ano
                 <div class="alert alert-danger"> {{ error }} </div>
             {% endif %}
             <p style="position: relative; left: 1rem; top: 10px; font-weight: 700;">Profil resmi:</p>
-            <img id="selectedImage" style="border: 1px solid #ccc; border-radius: 10px 10px 0px 0px; position: relative; left: 1rem;" src="{{ user_profile.profile_picture.url }}" alt="{{ user_profile.user.username }} profile photo" width="150px">
+            <img id="selectedImage" style="border: 1px solid #ccc; border-radius: 10px 10px 0 0; position: relative; left: 1rem;" src="{{ user_profile.profile_picture.url }}" alt="{{ user_profile.user.username }} profile photo" width="150px">
 
             <form method="POST" enctype="multipart/form-data" style="position: relative; top: 50px;" >
                 {% csrf_token %}

@@ -14,7 +14,7 @@ l{% load static %}
 {% block context %}
 <div class="container">
     <div style="display:flex; justify-content: center;">
-        <form action="{% url 'formPage' %}" method="post" style="margin-top: 80px;">
+        <form action="{% url 'form_page' %}" method="post" style="margin-top: 80px;">
             {% csrf_token %}
             
             {{ form.media }}

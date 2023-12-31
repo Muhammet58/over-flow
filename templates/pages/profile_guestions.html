@@ -22,7 +22,6 @@
         text-decoration: none;
         color: black;
         border-radius: 10px;
-        position: absolute;
         top: 75px;
         right: 26rem;
         width: 150px;
@@ -132,8 +131,8 @@
         <div style="border: 1px solid #ccc; width: 760px; height: 647px; position: absolute; top: 22rem; left: 47rem; border-radius: 10px; overflow: auto;">
             {% for que in asked_questions %}
             <div style="border-bottom: 1px solid #ccc; padding: 25px 20px;">    
-                <div style="position: relative; left: 0px;">{{ que.votes }} oylar &nbsp; {{ que.ans_count }} yanıt &nbsp; {{ que.view }} görüntüleme</div>
-                <a href="{% url 'questionDetail' que.id %}" style="text-decoration: none; font-size: 20px;">{{ que.title }}</a><br>
+                <div style="position: relative; left: 0;">{{ que.vote }} oylar &nbsp; {{ que.ans_count }} yanıt &nbsp; {{ que.view }} görüntüleme</div>
+                <a href="{% url 'question_detail' que.id %}" style="text-decoration: none; font-size: 20px;">{{ que.title }}</a><br>
                 {% for tag in que.tags.all %}
                     <div class="tag" style="display: inline-block;">
                         <a style="text-decoration: none;" href="{% url 'tag_detail' tag %}">{{ tag }}</a>

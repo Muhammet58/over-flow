@@ -48,42 +48,70 @@
 
     <div style="margin-left: 270px; margin-top: 15px; margin-bottom: 80px;">
         <h3 style="text-transform: uppercase; font-weight: 400;">Sorular</h3>
-        <a href="{% if user.is_authenticated %} {% url 'formPage' %} {% else %} {% url 'login' %} {% endif %}" class="btn btn-primary" style="position: absolute; right: 9rem; top: 1rem;">Soru sor</a>
+        <a href="{% if user.is_authenticated %}{% url 'form_page' %}{% else %}{% url 'login' %}{% endif %}" class="btn btn-primary" style="position: absolute; right: 9rem; top: 1rem;">Soru sor</a>
         <p style="position: absolute; top: 80px; font-weight: 500; font-size: large;">{{ question_count }} soru</p>
     </div>
 
+    {% if questions|length == 0 %}
+        <div class="alert alert-dark" style="width: 60rem; position: absolute; right: 5rem;">Soru bunamadı !</div>
+    {% endif %}
 
     {% for item in questions %}
     <div class="quest_card" {% if not item.tags %} style="margin-bottom: 10px;" {% endif %}>
         <div>
             <div style="padding-top: 10px; padding-bottom: 20px;">
-                <p class="info">{{ item.votes }} oylar</p>
+                <p class="info">{{ item.vote }} oylar</p>
                 <p class="info">{{ item.ann_answer }} cevap</p>
                 <p class="info">{{ item.view }} Görüntüleme</p>
             </div>
             
             {% if user.is_authenticated %}
-            <a style="text-decoration: none; font-size: large; font-weight: bold;" href="{% url 'questionDetail' pk=item.id %}"><h5 style= "margin-left: 250px; margin-top: -100px; margin-bottom: 40px;">{{ item.title }}</h5></a>
+            <a style="text-decoration: none; font-size: large; font-weight: bold;" href="{% url 'question_detail' pk=item.id %}"><h5 style= "margin-left: 250px; margin-top: -100px; margin-bottom: 40px;">{{ item.title }}</h5></a>
             {% else %}
             <a style="text-decoration: none; font-size: large; font-weight: bold;" href="{% url 'login' %}"><h5 style= "margin-left: 250px; margin-top: -100px; margin-bottom: 40px;">{{ item.title }}</h5></a>
             {% endif %}
 
-            {% for tag_name in item.tag_names %}
-                <a {% if forloop.counter == 1 %} style="margin-left: 250px; " {% endif %} href="{% if user.is_authenticated %} {% url 'tag_detail' name=tag_name %} {% else %} {% url 'login' %} {% endif %}" class="tag">{{ tag_name }}</a>
+            {% for tag in item.tags.all %}
+                <a {% if forloop.counter == 1 %} style="margin-left: 250px; " {% endif %} href="{% if user.is_authenticated %}{% url 'tag_detail' tag.name %}{% else %} {% url 'login' %}{% endif %}" class="tag">{{ tag.name }}</a>
             {% endfor %}
 
             <div class="float-end" style="font-size: 14px;">
-                <a href="{% if item.user__username == request.user.username %} {% url 'profile_page' %} {% elif user.is_authenticated %} {% url 'user_profile' item.user__username %} {% else %} {% url 'login' %} {% endif %}">{{ item.user__username }}</a> &nbsp; {{item.published_date|naturaltime }} &nbsp; soruldu
+                <a href="{% if item.user.username == request.user.username %}{% url 'profile_page' %}{% elif user.is_authenticated %}{% url 'user_profile' item.user.username %}{% else %}{% url 'login' %}{% endif %}">{{ item.user.username }}</a> &nbsp; {{item.published_date|naturaltime }} &nbsp; soruldu
             </div>
         </div>
     </div>
     {% endfor %}
+    <div style="margin-top: 100px;">
+        <nav aria-label="Page navigation example">
+            <ul class="pagination justify-content-center">
+                {% if page_obj.has_previous %}
+                    <li class="page-item"><a class="page-link" href="?page=1">&laquo; ilk</a></li>
+                {% endif %}
+
+            
+                {% for page_number in page_obj.paginator.page_range %}
+                    {% if page_obj.number == page_number %}
+                        <li class="page-item active"><a class="page-link" href="?page={{ page_number }}">{{ page_number }}</a></li>
+                    {% else %}
+                        <li class="page-item"><a class="page-link" href="?page={{ page_number }}">{{ page_number }}</a></li>
+                    {% endif %}
+                {% endfor %}
+            
+
+                {% if page_obj.has_next %}
+                    <li class="page-item"><a class="page-link" href="?page={{ page_obj.paginator.num_pages }}">son &raquo;</a></li>
+                {% endif %}
+
+            </ul>
+        </nav>
+    </div>
 </div>
 {% block js_files %}
 <script>
     if ( window.history.replaceState ) {
         window.history.replaceState( null, null, window.location.href );
     }
+
 </script>
 {% endblock %}
 {% endblock %}

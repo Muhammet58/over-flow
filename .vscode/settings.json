@@ -1,0 +1,6 @@
+{
+    "python.analysis.extraPaths": [
+        "./business_project"
+    ],
+    "git.ignoreLimitWarning": true
+}

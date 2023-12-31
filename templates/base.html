@@ -1,8 +1,7 @@
+{% load i18n %}
 {% load static %}
 <!DOCTYPE html>
-<html lang="tr">
-
-<head>
+<html lang="tr"><head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     
@@ -14,9 +13,7 @@
     
     {% block css_files %} {% endblock %}
     <title>over-flow | {% block title %}{% endblock %}</title>
-</head>
-
-<body>
+</head><body>
 
     <nav class="navbar" style="position: fixed;">
         <div class="container">
@@ -24,12 +21,18 @@
             <form style="width: 60%; margin-right: 20%; margin-top: -6.5px;" action="{% url 'index' %}" method="post" id="myForm" role="search">
                 {% csrf_token %}
                 <div class="input-group">
-                    <span class="input-group-text" id="basic-addon1" style="border: 1px solid gray"><i class="fa-solid fa-magnifying-glass"></i></span>
-                    <input class="form-control" style="border: 1px solid gray" type="search" name="search" placeholder="Search" aria-label="Search">
+                    <span class="input-group-text" style="border: 1px solid gray"><i class="fa-solid fa-magnifying-glass"></i></span>
+                    <input class="form-control" id="search-bar" style="border: 1px solid gray; border-radius: 0 5px 5px 0" type="search" name="search" placeholder="Search" aria-label="Search" autocomplete="off">
+                </div>
+                <div style="width: 777px; height: 70px; background: white; box-shadow: 0 4px 8px 7px rgba(0, 0, 0, 0.2); position: fixed; top: 55px; border: 1px solid rgba(0, 0, 0, 0.3); border-radius: 7px; padding: 10px; display: flex; justify-content: space-between; opacity: 0;" id="guide">
+                    <p>[etiket]<br><span style="opacity: 0.6;">etikete göre arama</span></p>
+                    <p>"içerik"<br><span style="opacity: 0.6;">sorulara göre arama</span></p>
+                    <p>"kullanıcı:kullanıcı_adı" <br><span style="opacity: 0.6;">kullanıcı adına göre arama</span></p>
                 </div>
             </form>
             {% if user.is_authenticated %}
-            <a href="{% url 'profile_page' %}" class="profile_link">profilim</a>
+                <a href="{% url 'profile_page' %}" class="profile_link">profilim</a>
+                <a href="{% url 'get_report' %}" class="get_report">rapor al</a>
             {% endif %}
         </div>
     </nav>
@@ -42,12 +45,12 @@
         <ul>
             <li {% if request.resolver_match.url_name == 'index' %} style="background-color: rgb(180, 180, 180);" {% endif %}><a href="{% url 'index' %}" type="button" class="link"><i class="fa-solid fa-house"></i>Anasayfa</a></li>
             {% if user.is_authenticated %}
-            <li {% if request.resolver_match.url_name == 'saved_page' %} style="background-color: rgb(180, 180, 180);" {% endif %}><a href="{% url 'saved_page' %}" type="button"  class="link"><i class="fa-solid fa-bookmark"></i>Kaydedilenler</a></li>
-            <li {% if request.resolver_match.url_name == 'tags' %} style="background-color: rgb(180, 180, 180);" {% endif %}><a href="{% url 'tags' %}" type="button"  class="link"><i class="fa-solid fa-tags"></i>Etiketler</a></li>
-            <li><a href="" type="button" data-bs-toggle="modal" data-bs-target="#exampleModal"><i class="fa-solid fa-right-from-bracket"></i> Çıkış</a></li>
+                <li {% if request.resolver_match.url_name == 'saved_page' %} style="background-color: rgb(180, 180, 180);" {% endif %}><a href="{% url 'saved_page' %}" type="button"  class="link"><i class="fa-solid fa-bookmark"></i>Kaydedilenler</a></li>
+                <li {% if request.resolver_match.url_name == 'tags' %} style="background-color: rgb(180, 180, 180);" {% endif %}><a href="{% url 'tags' %}" type="button"  class="link"><i class="fa-solid fa-tags"></i>Etiketler</a></li>
+                <li><a href="" type="button" data-bs-toggle="modal" data-bs-target="#exampleModal"><i class="fa-solid fa-right-from-bracket"></i> Çıkış</a></li>
             {% else %}
-            <li {% if request.resolver_match.url_name == 'register' %} style="background-color: rgb(180, 180, 180);" {% endif %}><a href="{% url 'register' %}" type="button"  class="link"><i class="fa-solid fa-user-plus"></i>Kayıt ol</a></li>
-            <li {% if request.resolver_match.url_name == 'login' %} style="background-color: rgb(180, 180, 180);" {% endif %}><a href="{% url 'login' %}" type="button"  class="link"><i class="fa-solid fa-right-to-bracket"></i></i>Giriş</a></li>
+                <li {% if request.resolver_match.url_name == 'register' %} style="background-color: rgb(180, 180, 180);" {% endif %}><a href="{% url 'register' %}" type="button"  class="link"><i class="fa-solid fa-user-plus"></i>Kayıt ol</a></li>
+                <li {% if request.resolver_match.url_name == 'login' %} style="background-color: rgb(180, 180, 180);" {% endif %}><a href="{% url 'login' %}" type="button"  class="link"><i class="fa-solid fa-right-to-bracket"></i>Giriş</a></li>
             {% endif %}
         </ul>
     </div>
@@ -80,7 +83,17 @@
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"
         integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
     <script src="{% static 'ajax.js' %}"></script>
-</body>
+    <script>
+        const searchBar = document.getElementById("search-bar")
+        const guideBar = document.getElementById("guide")
 
-</html>
+        searchBar.addEventListener("click", () => {
+            if (guideBar.style.opacity === '0') {
+                guideBar.style.opacity = '1'
+            } else {
+                guideBar.style.opacity = '0'
+            }
+        })
+    </script>
+</body></html>
 
