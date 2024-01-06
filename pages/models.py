@@ -100,7 +100,7 @@ class Save(models.Model):
 class AnswerComments(models.Model):
     comment = RichTextUploadingField()
     comment_answer = models.ForeignKey(Answers, on_delete=models.CASCADE, related_name='answer_comments')
-    comments_user = models.ForeignKey(User, on_delete=models.CASCADE)
+    comment_user = models.ForeignKey(User, on_delete=models.CASCADE)
     published_date = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):

@@ -57,7 +57,7 @@
     {% endif %}
 
     {% for item in questions %}
-    <div class="quest_card" {% if not item.tags %} style="margin-bottom: 10px;" {% endif %}>
+    <div class="quest_card" {% if not item.tags__name %} style="margin-bottom: 10px;" {% endif %}>
         <div>
             <div style="padding-top: 10px; padding-bottom: 20px;">
                 <p class="info">{{ item.vote }} oylar</p>
@@ -72,11 +72,12 @@
             {% endif %}
 
             {% for tag in item.tags.all %}
-                <a {% if forloop.counter == 1 %} style="margin-left: 250px; " {% endif %} href="{% if user.is_authenticated %}{% url 'tag_detail' tag.name %}{% else %} {% url 'login' %}{% endif %}" class="tag">{{ tag.name }}</a>
+                <a {% if forloop.first %}style="margin-left: 250px;"{% endif %}  href="{% if user.is_authenticated %}{% url 'tag_detail' tag.name %}{% else %}{% url 'login' %}{% endif %}" class="tag">{{ tag.name }}</a>
             {% endfor %}
 
+
             <div class="float-end" style="font-size: 14px;">
-                <a href="{% if item.user.username == request.user.username %}{% url 'profile_page' %}{% elif user.is_authenticated %}{% url 'user_profile' item.user.username %}{% else %}{% url 'login' %}{% endif %}">{{ item.user.username }}</a> &nbsp; {{item.published_date|naturaltime }} &nbsp; soruldu
+                <a href="{% if item.user.username == request.user.username %}{% url 'profile_page' %}{% elif user.is_authenticated %}{% url 'user_profile' item.user.username %}{% else %}{% url 'login' %}{% endif %}">{{ item.user__username }}</a> &nbsp; {{item.published_date|naturaltime }} &nbsp; soruldu
             </div>
         </div>
     </div>

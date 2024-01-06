@@ -53,7 +53,7 @@
                         <a href="{% url 'tag_detail' name=tag.name%}" class="btn btn-primary">{{ tag.name }}</a>
                         <p class="card-text" style="border-top: outset; margin-top:10px;"></p>
                         <em class="card-text" style="margin-top: 30px;">{{ tag.content }}</em>
-                        <p style="margin-top: 95px;">{{ tag.questions.count }} soru</p>
+                        <p style="margin-top: 95px;">{{ tag.question_count }} soru</p>
                     </div>
                 </div>
             </div>

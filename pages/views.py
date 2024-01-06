@@ -1,15 +1,12 @@
 from datetime import datetime
 from typing import Any
-
-from bs4 import Tag
 from django.urls import reverse_lazy, reverse
-from django.db.models.query import QuerySet, Prefetch
 from django.views.generic import ListView, DetailView, FormView, View
 from .tasks import GenerateReport
-from django.http import JsonResponse, HttpResponse
+from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from .models import Tags, AnswerComments, Questions, Answers, QuestionComments, Vote, Save
-from .forms import answerForm, questionForm, commentForm, QuesCommentForm
+from .forms import answerForm, questionForm, AnswerCommentForm, QuestionCommentForm
 from django.db.models import Count
 from django.contrib import messages
 from django.db.models import Q
@@ -56,14 +53,14 @@ class IndexView(ListView):
         return context
 
 
+
 class QuestionDetailView(DetailView):
     model = Questions
     template_name = "pages/detail.html"
 
     def get_object(self, **kwargs):
         pk = self.kwargs.get('pk')
-        queryset = self.get_queryset().filter(id=pk)
-        obj = get_object_or_404(queryset)
+        obj = get_object_or_404(Questions, id=pk)
         return obj
 
     def get_context_data(self, **kwargs):
@@ -78,25 +75,24 @@ class QuestionDetailView(DetailView):
             obj.save()
             self.request.session[session_key] = True
 
+
         saved_questions = Save.objects.filter(user=self.request.user.id).select_related('user').values_list('questions__id', flat=True)
         question_answers = Answers.objects.filter(answer_to_the_question=obj).order_by('-vote').select_related('answer_to_the_question', 'user')
         question_comments = QuestionComments.objects.filter(comment_question=obj).order_by('-published_date').select_related('comment_question', 'comment_user')
         tags = obj.tags.all()
 
-        answer_comments = AnswerComments.objects.filter(comment_answer__answer_to_the_question=obj).order_by('-published_date').select_related('comment_answer')
 
         connect = self.model.objects.filter(~Q(id=obj.id) & Q(title__icontains=obj.title))
         related = self.model.objects.filter(tags__in=obj.tags.all()).exclude(id=obj.id)
 
-        question_comment_form = QuesCommentForm()
-        answer_comment_form = commentForm()
+        question_comment_form = QuestionCommentForm()
+        answer_comment_form = AnswerCommentForm()
         form = answerForm()
 
-        context['item'] = obj
-        context['answer'] = question_answers
+        context['question'] = obj
+        context['answers'] = question_answers
         context['saved_que'] = saved_questions
         context['question_comments'] = question_comments
-        context['answer_comments'] = answer_comments
         context['answer_count'] = question_answers.count()
         context['tags'] = tags
         context['connected'] = connect
@@ -109,59 +105,34 @@ class QuestionDetailView(DetailView):
 
 
 
-class QuestionCommentFormView(FormView):
-    form_class = QuesCommentForm
-
+class CreateCommentView(FormView):
+    def get_form_class(self):
+        comment_type = self.request.POST.get('comment_type')
+        form_class = QuestionCommentForm if comment_type == 'questionComment' else AnswerCommentForm
+        return form_class
     def get_object(self):
         pk = self.kwargs.get('pk')
-        return get_object_or_404(Questions, id=pk)
-    def post(self, request, **kwargs):
-        obj = self.get_object()
-        que_comment_form = self.form_class(request.POST)
-
-        if que_comment_form.is_valid():
-            comment = que_comment_form.save(commit=False)
-            comment.comment_question = obj
-            comment.comment_user = request.user
-            comment.save()
-            return self.get_success_response(comment)
-
-    def get_success_response(self, form):
-        response_data = {
-            'message': 'success',
-            'commentUser': form.comment_user.username,
-            'commentId': form.id,
-            'published_date': form.published_date.astimezone().strftime('%d %B %Y %H:%M'),
-        }
-        return JsonResponse(response_data)
-
-
-
-class AnswerCommentFormView(FormView):
-    form_class = commentForm
-
-    def get_object(self):
-        pk = self.kwargs.get('pk')
-        return get_object_or_404(Answers, id=pk)
+        comment_type = self.request.POST.get('comment_type')
+        model_object = get_object_or_404(Questions, id=pk) if comment_type == 'questionComment' else get_object_or_404(Answers, id=pk)
+        return model_object
     def post(self, request, *args, **kwargs):
-        this_answer = self.get_object()
-        form = self.form_class(request.POST)
+        this_object = self.get_object()
+        form_class = self.get_form_class()
+        form = form_class(data=request.POST, comment=this_object, user=request.user)
 
         if form.is_valid():
-            item = form.save(commit=False)
-            item.comment_answer = this_answer
-            item.comments_user = request.user
-            item.save()
-
-            return self.get_success_response(item)
+            comment = form.save()
+            return self.get_success_response(comment)
 
     def get_success_response(self, item):
-        response_data = {
-            'message': 'success', 'formValue': item.comment, 'user': item.comments_user.username,
-            'PubDate': item.published_date.astimezone().strftime('%d %B %Y %H:%M'),
-            'commentId': item.id
+        response = {
+            'status': 'success',
+            'comment': item.comment,
+            'commentUser': item.comment_user.username,
+            'commentId': item.id,
+            'commentDate': item.published_date.astimezone().strftime('%d %B %Y %H:%M'),
         }
-        return JsonResponse(response_data)
+        return JsonResponse(response)
 
 
 
@@ -170,10 +141,13 @@ class AskedQuestionFormView(FormView):
     form_class = questionForm
     success_url = '/'
 
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['user'] = self.request.user
+        return kwargs
+
     def form_valid(self, form):
-        item = form.save(commit=False)
-        item.user = self.request.user
-        item.save()
+        item = form.save()
         form.save_m2m()
         return super().form_valid(item)
 
@@ -181,19 +155,23 @@ class AskedQuestionFormView(FormView):
 
 class AnswerQuestionFormView(FormView):
     form_class = answerForm
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['user'] = self.request.user
+        kwargs['question'] = self.get_object()
+        return kwargs
+
     def get_success_url(self):
         pk = self.kwargs['pk']
-        return reverse_lazy("question_detail", kwargs={"pk": pk})
+        return reverse_lazy("question_detail", kwargs={"pk": pk})   
+    
     def get_object(self):
         pk = self.kwargs.get('pk')
         return get_object_or_404(Questions, id=pk)
+    
     def form_valid(self, form):
-        super().form_valid(form)
-        item = form.save(commit=False)
-        item.user = self.request.user
-        item.answer_to_the_question = self.get_object()
-        item.save()
-
+        item = form.save()
         return super().form_valid(item)
 
 
@@ -205,13 +183,13 @@ class TagView(ListView):
     paginate_by = 8
 
     def get_queryset(self):
-        queryset = Tags.objects.annotate(question_count=Count('questions')).order_by('-question_count')
+        queryset = Tags.objects.annotate(question_count=Count('questions')).order_by('-question_count').values('name', 'content', 'question_count')
         return queryset
 
     def get(self, request, *args, **kwargs):
         search = request.GET.get('Search')
         if search:
-            tags = Tags.objects.filter(name__icontains=search)
+            tags = Tags.objects.filter(name__icontains=search).annotate(question_count=Count('questions')).values('name', 'content', 'question_count')
             if not tags.exists():
                 return render(request, self.template_name, {'error': 'Aramaya göre içerik bulunmamaktadır'})
             return render(request, self.template_name, {'tags': tags})
@@ -229,7 +207,6 @@ class TagView(ListView):
             }
             return render(request, self.template_name, context)
         return super().get(request, *args, **kwargs)
-
 
 
 

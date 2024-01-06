@@ -44,6 +44,7 @@
         color: gray;
         transition: .5s ease;
         text-decoration: none;
+        cursor: pointer;
     }
 
     .stil:hover {
@@ -99,30 +100,30 @@
     <div class="col-12">
 
         <div class="card_question" style="display: flex; align-items: center;">
-            <p>{{ item.title }}</p>
+            <p>{{ question.title }}</p>
             <a href="{% url 'form_page' %}" class="btn btn-primary" style="position: absolute; left: 50rem; width: 6rem;">Soru sor</a>
         </div>
 
         <div style="position: absolute; top: 9rem; left: 31rem; font-size: 15px; border-bottom: 1px solid rgb(190, 190, 190); margin-right: 7rem; width: 47%; padding-bottom: 15px;">
-            Diye sordu <strong>{{ item.published_date }}</strong> tarihinde&nbsp;&nbsp;&nbsp;<strong>{{ item.view }}</strong> kez görüntülendi
+            Diye sordu <strong>{{ question.published_date }}</strong> tarihinde&nbsp;&nbsp;&nbsp;<strong>{{ question.view }}</strong> kez görüntülendi
         </div>
 
         <div style="position: absolute; top: 13rem; left: 31.7rem; font-size: larger; text-align: center;">
-            <a style="text-decoration: none; color: black;" onclick="toggleQuestionVote('{{item.id}}', 'increase')"> <i class="fa-solid fa-caret-up border-color"></i></a> <br>
-            <div style="position: absolute; top: 3rem; left: 0.7rem; font-size: 23px; font-weight: 600;"><p id="voteText{{item.id}}">{{ item.vote }}</p></div> <br>
-            <a style="text-decoration: none; color: black;"  onclick="toggleQuestionVote('{{item.id}}', 'decrease')"><i class="fa-solid fa-caret-down border-color"></i></a> <br>
+            <a style="text-decoration: none; color: black;" onclick="toggleQuestionVote('{{question.id}}', 'increase')"> <i class="fa-solid fa-caret-up border-color"></i></a> <br>
+            <div style="position: absolute; top: 3rem; left: 0.7rem; font-size: 23px; font-weight: 600;"><p id="voteText{{question.id}}">{{ question.vote }}</p></div> <br>
+            <a style="text-decoration: none; color: black;"  onclick="toggleQuestionVote('{{question.id}}', 'decrease')"><i class="fa-solid fa-caret-down border-color"></i></a> <br>
         </div>
 
         <div style="position: absolute; top: 22rem; left: 32.2rem;">
-            <a href="{% url 'is_saved' pk=item.id %}"><i style="color: gray; font-size: 25px;" onclick="toggleSaved(this)" class="fas fa-bookmark {% if item.id in saved_que %} text-danger {% endif %}" type="button"></i></a>
+            <a href="{% url 'is_saved' pk=question.id %}"><i style="color: gray; font-size: 25px;" onclick="toggleSaved(this)" class="fas fa-bookmark {% if question.id in saved_que %} text-danger {% endif %}" type="button"></i></a>
         </div>
 
         <div style="position: absolute; top: 25rem; left: 32.3rem; font-size: 17px; opacity: 0.8;">
-            <a class="history" href="{% url 'timeline' item.id %}"><i class="fa-solid fa-clock-rotate-left"></i></a>
+            <a class="history" href="{% url 'timeline' question.id %}"><i class="fa-solid fa-clock-rotate-left"></i></a>
         </div>
 
         <div style="position: absolute; left: 36rem; top: 12rem; width: 50%; word-wrap: break-word; overflow: auto; height: 210px;">
-            <p class="card-text h6">{{ item.context|safe }}</p><br>
+            <p class="card-text h6">{{ question.context|safe }}</p><br>
         </div>
 
         <div style="position: relative; top: 430px; left: 180px;">
@@ -163,74 +164,73 @@
             {% endfor %}
         </div>
 
-
-        <div style="opacity: 0; transition: 0.1s ease;" id="cmnt_field">
-            <form action="{% url 'question_comment_form' item.id %}" method="post" id="commentForm">
-                {% csrf_token %}
-                {{ queCommentForm.comment }}
-                <a  type="submit" role="button" class="btn btn-primary" style="position: absolute; top: 36.5rem; right: 32.5rem;" onclick="questionCommentAdd('{{item.id}}')">gönder</a>
-            </form>
-        </div>
-
+            <div style="opacity: 0; transition: 0.1s ease;" id="cmnt_field">
+               <form action="{% url 'create_comment' question.id %}" method="post" id="questionCommentForm">
+                    {% csrf_token %}
+                    {{ queCommentForm.comment }}
+                    <a type="button" role="button" class="btn btn-primary" style="position: absolute; top: 36.5rem; right: 32.5rem;" onclick="commentAdd('{{question.id}}', 'questionComment')">gönder</a>
+               </form>
+            </div>
 
 
-        <div id="comments" style="transition: 0.3s ease; margin: auto;">
+
+        <div id="commentsDiv" style="transition: 0.3s ease; margin: auto;">
             <div class="col-12" id="comments">
                 {% for comment in question_comments %}
                     <div id="queComment{{ comment.id }}" style="width: 50rem; position: relative; top: 32rem; left: 12rem; border-top: 1px solid rgb(190, 190, 190); word-wrap: break-word; padding: 5px 20px 5px 20px;">
-                        <p>{{ comment.comment }} - {{ comment.comment_user }} &nbsp; <em style="opacity: 0.5;">{{ comment.published_date }}</em>{% if comment.comment_user == request.user or request.user.is_superuser %}<a class="stil" onclick="deleteComment('question_comment', '{{comment.id}}')" style="float: right; cursor: pointer;">Sil</a>{% endif %}</p>
+                        <p>{{ comment.comment }} - {{ comment.comment_user }} &nbsp; <em style="opacity: 0.5;">{{ comment.published_date }}</em>{% if comment.comment_user == request.user or request.user.is_superuser %}<a class="stil" onclick="commentDelete('question_comment', '{{comment.id}}', 'questionComment')" style="float: right; cursor: pointer;">Sil</a>{% endif %}</p>
                     </div>
                 {% endfor %}
 
                 <a onclick="displayChange()" id="cmnt_button" class="stil" style="position: absolute; top: 28rem; left: 36rem;"><p style="opacity: 0.8; font-size: large; cursor: pointer;">Yorum Ekle</p></a>
 
-                {% if item.user == request.user or request.user.is_superuser %}
-                    <a href="{% url 'delete_item' item_type='question' pk=item.id %}" class="stil" style="position: absolute; top: 28rem; left: 44rem;"><p style="opacity: 0.8; font-size: large;">Sil</p></a>
+                {% if question.user == request.user or request.user.is_superuser %}
+                    <a href="{% url 'delete_item' item_type='question' pk=question.id %}" class="stil" style="position: absolute; top: 28rem; left: 44rem;"><p style="opacity: 0.8; font-size: large;">Sil</p></a>
                 {% endif %}
 
-                <span style="position: absolute; left: 80rem; top: 27rem;">{{ item.user.username }}<br>{{ item.published_date|naturaltime }}</span>
+                <span style="position: absolute; left: 80rem; top: 27rem;">{{ question.user.username }}<br>{{ question.published_date|naturaltime }}</span>
             </div>
 
             <div id="answer_section" style="position: absolute; z-index: -1;">
                 <div style="margin-top: 32rem; margin-left: 7rem;">
 
-                    {% if answer|length != 0 %}
+                    {% if answers|length != 0 %}
                         <div style="font-size: 25px;">{{ answer_count }} yanıt</div>
                     {% endif %}
 
-                    {% for item in answer %}
-                        <div style="width: 800px; margin-top: 80px; {% if forloop.first %}margin-top: 20px;{% endif %} border-top: 1px solid #ccc; padding: 10px;">
+                    {% for answer in answers %}
+                        <div style="width: 800px; margin-top: 10rem; {% if forloop.first %}margin-top: 20px;{% endif %}border-top: 1px solid #ccc; padding: 10px;">
                             <div style="font-size: larger; text-align: center; width: 2.5rem;">
-                                <a style="text-decoration: none; color: black;"  onclick="toggleAnswerVote('{{item.id}}', 'increase')"><i class="fa-solid fa-caret-up border-color"></i></a><br>
-                                <div style="font-size: 23px; font-weight: 600; float: left;"><p id="answerVoteText{{item.id}}" style="margin: -1rem 0 -1rem 0.7rem;">{{ item.vote }}</p></div><br>
-                                <a style="text-decoration: none; color: black;"  onclick="toggleAnswerVote('{{item.id}}', 'decrease')"><i class="fa-solid fa-caret-down border-color"></i></a><br>
+                                <a style="text-decoration: none; color: black;"  onclick="toggleAnswerVote('{{answer.id}}', 'increase')"><i class="fa-solid fa-caret-up border-color"></i></a><br>
+                                <div style="font-size: 23px; font-weight: 600; float: left;"><p id="answerVoteText{{answer.id}}" style="margin: -1rem 0 -1rem 0.7rem;">{{ answer.vote }}</p></div><br>
+                                <a style="text-decoration: none; color: black;"  onclick="toggleAnswerVote('{{answer.id}}', 'decrease')"><i class="fa-solid fa-caret-down border-color"></i></a><br>
                             </div>
                         </div>
 
-                        <div class="col-12" style="width: 90%; margin: -150px 0 0 70px;">
-                            <p style="position: absolute; top: 0; left: 10rem;">{{ item.answer|safe }}</p>
+                        <div class="col-12" style="width: 50rem; margin: -150px 0 0 70px; word-wrap: break-word;">
+                            <p style="position: absolute; top: 0; left: 10rem;">{{ answer.answer|safe }}</p>
                         </div>
 
-                        <a onclick="ansDisplayChange('{{item.id}}')" id="ans_cmnt_button" class="stil" style="display: block; margin: 10rem 0 -48px 40px;"> <p style="opacity: 0.8; font-size: large; width: 6rem; cursor: pointer;">Yorum Ekle</p></a>
+                        <a onclick="ansDisplayChange('{{answer.id}}')" id="ans_cmnt_button" class="stil" style="display: block; margin: 10rem 0 -48px 40px;"> <p style="opacity: 0.8; font-size: large; width: 6rem; cursor: pointer;">Yorum Ekle</p></a>
 
-                        {% if item.user == request.user or request.user.is_superuser %}
-                            <a href="{% url 'delete_item' item_type='answer' pk=item.id %}" class="stil" style="display: block; position: relative; top: 0.3rem; left: 10rem; opacity: 0.8; font-size: large; width: 1.5rem;">Sil</a>
+                        {% if answer.user == request.user or request.user.is_superuser %}
+                            <a href="{% url 'delete_item' item_type='answer' pk=answer.id %}" class="stil" style="display: block; position: relative; top: 0.3rem; left: 10rem; opacity: 0.8; font-size: large; width: 1.5rem;">Sil</a>
                         {% endif %}
 
-                        <span style="position: relative; left: 45rem; top: -1rem;">{{ item.user.username }}<br>{{ item.published_date|naturaltime }}</span>
+                        <span style="position: relative; left: 45rem; top: -1rem;">{{ answer.user.username }}<br>{{ answer.published_date|naturaltime }}</span>
 
-                        <div style="display: none; transition: 0.1s ease;" id="ans_cmnt_field{{item.id}}">
-                            <form action="{% url 'comment_form' item.id %}" method="post" id="ans_comment_form{{item.id}}">
+                        <div style="display: none; transition: 0.1s ease;" id="ans_cmnt_field{{answer.id}}">
+                            <form action="{% url 'create_comment' answer.id %}" method="post" id="answerCommentForm{{answer.id}}">
                                 {% csrf_token %}
                                 {{ ansCommentForm.comment }}
-                                <a type="submit" role="button" class="btn btn-primary" style="position: relative; top: -2.5rem; left: 48.5rem;" onclick="answerCommentAdd('{{item.id}}')">gönder</a>
+                                <a type="submit" role="button" class="btn btn-primary" style="position: relative; top: -2.5rem; left: 48.5rem;" onclick="commentAdd('{{answer.id}}', 'answerComment')">gönder</a>
                             </form>
                         </div>
 
-                        <div id="answer_comment_field{{item.id}}">
-                            {% for comment in answer_comments|dictsortreversed:"published_date" %}
-                                <div id="ansCommentField{{comment.id}}" style="border-top: 1px solid #ccc; margin: 60px 0 -60px 50px; padding: 5px 20px 5px 20px; word-wrap: break-word; width: 50rem;">
-                                    <p>{{ comment.comment }} - {{ comment.comments_user }} &nbsp; <em style="opacity: 0.5;">{{ comment.published_date }}</em>{% if comment.commentUser == request.user or request.user.is_superuser %}<a onclick="ansCommentDelete('answer_comment', '{{comment.id}}')" class="stil" style="float: right; cursor: pointer;">Sil</a>{% endif %}</p>
+                        <div id="answer_comment_field{{answer.id}}">
+                            {% for comment in answer.answer_comments.all|dictsortreversed:"published_date" %}
+                                <div id="answerCommentField{{comment.id}}" style="border-top: 1px solid #ccc; margin: 60px 0 -60px 50px; padding: 5px 20px 5px 20px; word-wrap: break-word; width: 50rem;">
+                                    <p>{{ comment.comment }} - {{ comment.comments_user }} &nbsp; <em style="opacity: 0.5;">{{ comment.published_date }}</em>{% if comment.comments_user == request.user or request.user.is_superuser %}<a onclick="commentDelete('answer_comment', '{{comment.id}}', 'answerComment')" class="stil" style="float: right; cursor: pointer;">Sil</a>{% endif %}</p>
                                 </div>
                             {% endfor %}
                         </div>
@@ -240,7 +240,7 @@
 
 
                 <div style="position: absolute; left: 7rem; margin-top: 5rem;" id="answer_field">
-                    <form action="{% url 'answer_question' item.id %}" method="post">
+                    <form action="{% url 'answer_question' question.id %}" method="post">
                         {% csrf_token %}
                         <p><label style="width: 800px;" for="{{ form.answer.id_for_label }}">Cevabınız :</label></p>
                         <p>{{ form.answer }}</p>
@@ -257,39 +257,39 @@
 
 
 {% block js_files %}
-<script>
-    function toggleSaved(icon) {
-        icon.classList.toggle("fas");
-        icon.classList.toggle("far");
-        icon.classList.toggle("text-danger");
-    }
-
-    function displayChange() {
-        const cmntField = document.getElementById('cmnt_field');
-        const cmnt = document.getElementById('comments');
-
-        if (cmntField.style.opacity === '0') {
-            cmntField.style.opacity = '1'
-            cmnt.style.marginTop = '7rem'
+    <script>
+        function toggleSaved(icon) {
+            icon.classList.toggle("fas");
+            icon.classList.toggle("far");
+            icon.classList.toggle("text-danger");
         }
-        else {
-            cmntField.style.opacity = '0'
-            cmnt.style.marginTop = '0'
-        }
-    }
-
-    function ansDisplayChange(item_id) {
-        const ansCmntField = document.getElementById('ans_cmnt_field' + item_id);
-
-        if (ansCmntField.style.display === 'none') {
-            ansCmntField.style.display = 'block'
-        } else {
-            ansCmntField.style.display = 'none'
-        }
-    }
     
-</script>
-<script src="{% static 'ajax.js' %}"></script>
-{% endblock js_files %}
+        function displayChange() {
+            const cmntField = document.getElementById('cmnt_field');
+            const cmnt = document.getElementById('commentsDiv');
+    
+            if (cmntField.style.opacity === '0') {
+                cmntField.style.opacity = '1'
+                cmnt.style.marginTop = '7rem'
+            }
+            else {
+                cmntField.style.opacity = '0'
+                cmnt.style.marginTop = '0'
+            }
+        }
+    
+        function ansDisplayChange(item_id) {
+            const ansCmntField = document.getElementById('ans_cmnt_field' + item_id);
+    
+            if (ansCmntField.style.display === 'none') {
+                ansCmntField.style.display = 'block'
+            } else {
+                ansCmntField.style.display = 'none'
+            }
+        }
+        
 
+    </script>
+    <script src="{% static 'ajax.js' %}"></script>
+{% endblock js_files %}
 {% endblock context %}

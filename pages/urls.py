@@ -4,8 +4,7 @@ from . import views
 urlpatterns = [
     path('', views.IndexView.as_view(), name='index'),
     path('detail/<int:pk>/', views.QuestionDetailView.as_view(), name='question_detail'),
-    path('ques-comment-form/<int:pk>', views.QuestionCommentFormView.as_view(), name='question_comment_form'),
-    path('comment/<int:pk>', views.AnswerCommentFormView.as_view(), name='comment_form'),
+    path('comment-add/<int:pk>', views.CreateCommentView.as_view(), name='create_comment'),
     path('ask-question/', views.AskedQuestionFormView.as_view(), name='form_page'),
     path('answer-question/<int:pk>', views.AnswerQuestionFormView.as_view(), name='answer_question'),
     path('tags', views.TagView.as_view(), name='tags'),
